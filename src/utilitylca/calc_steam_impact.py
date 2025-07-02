@@ -92,30 +92,30 @@ class steam_net:
 
     def result(self):
 
-        c_leak = self.nw.conns.loc["steam leak:out2_steam losses:in1"]['object']
-        c02 = self.nw.conns.loc["steam leak:out1_controlvalve:in1"]['object']
-        c03 = self.nw.conns.loc["back pressure turbine:out1_steam pipe:in1"]['object']
-        cond_5 = self.nw.conns.loc["Injection:out1_heat sink:in1"]['object']
-        cond_1 = self.nw.conns.loc["heat sink:out1_split condensate:in1"]['object']
-        c01 = self.nw.conns.loc["controlvalve:out1_Injection:in1"]['object']
-        c1 = self.nw.conns.loc["split condensate:out1_condensate pipe:in1"]['object']
-        muw= self.nw.conns.loc["Make-up water:out1_Makeup water feed:in2"]['object']
-        muw2=self.nw.conns.loc["leak makeup:out1_Makeup water feed:in3"]['object']
+        c_leak = self.nw.get_conn('c_leak')#conns.loc["steam leak:out2_steam losses:in1"]['object']
+        c02 = self.nw.get_conn('c02')
+        c03 = self.nw.get_conn('c03')
+        cond_5 = self.nw.get_conn('cond_5')
+        cond_1 = self.nw.get_conn('cond_1')
+        c01 = self.nw.get_conn('c01')
+        c1 = self.nw.get_conn('c1')
+        muw= self.nw.get_conn('muw')
+        muw2=self.nw.get_conn('muw2')
         
-        boiler=self.nw.comps.loc["steam boiler"]['object']
-        heat_sink=self.nw.comps.loc["heat sink"]['object']
+        boiler=self.nw.get_conn("e_boil")
+        hex_heat_sink=self.nw.get_conn("e_heat_sink")
 
-        turbine_bus = self.nw.busses['turbines']
+        turbine_grid = self.nw.get_conn('e_turb_grid')
 
         leakage_loss= c_leak.m.val *(c_leak.h.val - muw2.h.val)
         pipe_loss = c02.m.val *c03.h.val - c02.m.val * c02.h.val #only steam pipe
-        self.elec_factor= abs(turbine_bus.P.val/heat_sink.Q.val)  # *0.9 efficiency of generator
-        self.boiler_factor = abs(boiler.Q.val/heat_sink.Q.val)
-        self.losses=(pipe_loss+leakage_loss)/abs(heat_sink.Q.val)*1000 #boiler.Q.val+heat_sink.Q.val+bpt.P.val # 
-        self.watertreatment_factor = abs(muw.m.val/heat_sink.Q.val)
+        self.elec_factor= abs(turbine_grid.E.val/hex_heat_sink.E.val)  # *0.9 efficiency of generator
+        self.boiler_factor = abs(boiler.E.val/hex_heat_sink.E.val)
+        self.losses=(pipe_loss+leakage_loss)/abs(hex_heat_sink.E.val)*1000 #boiler.Q.val+heat_sink.Q.val+bpt.P.val # 
+        self.watertreatment_factor = abs(muw.m.val/hex_heat_sink.E.val)
         #calc exergy reduction:
         
-        self.E_bpt= -turbine_bus.P.val#((c04.h.val*1000 -c03.h.val*1000) - self.Tamb* (c03.s.val - c04.s.val) )* c03.m.val
+        self.E_bpt= -turbine_grid.E.val#((c04.h.val*1000 -c03.h.val*1000) - self.Tamb* (c03.s.val - c04.s.val) )* c03.m.val
         if self.cond_inj:
             self.E_hs= ((cond_5.h.val*1000 -cond_1.h.val*1000) - (self.Tamb+273)* (cond_5.s.val - cond_1.s.val))* cond_5.m.val
         else:
@@ -235,19 +235,45 @@ class steam_net:
         
         i=0
         while i < 10:
-
             self.calc_steam_net()
             if self.nw.converged:
                 break
             i+=1
         else:
             raise Exception('Steam net calculation failed. Please give it another try!')
-        return self.calculate_impact(allocate)
+        #return self.calculate_impact(allocate)
+    def setup_bw_link(self, bw_heat, bw_electricity):
+        self.nw.get_comp('boiler powersource').link_bw(bw_heat)
+        self.nw.get_comp('grid').link_bw(bw_electricity)
+        #todo add water, 
+        #if isinstance(self.impact_category, list):
+        #    self.nw.calc_background_impact(self.impact_category)
+        #else:
+        #    print('Impact category not defined as a list of categories.')
 
-    def calculate_background(self, allocate= 'credit'):
-        '''
+    def setup_functional_unit(self, allocation):
+        
+        if allocation == 'credit':
+            self.nw.get_comp('grid').functional_unit =False
+            functional_units={
+                'heat sink':{'component': self.nw.get_comp('heat sink'),
+                             'allocationfactor': 1}
+            }
+        elif allocation == 'by exergy':
+            self.nw.get_comp('grid').functional_unit = True
+            functional_units={
+                'distributed steam':{'component': self.nw.get_comp('heat sink'),
+                             'allocationfactor': self.alloc_ex},
+                'substituted electricity':{'component': self.nw.get_comp('grid'),
+                             'allocationfactor': 1-self.alloc_ex}
+            }
+
+        self.nw.set_functional_unit(functional_units)
+
+    '''def calculate_background(self, allocate= 'credit'):
+        
         Calculate LCA results for background system. Brightway datasets needs to be linked for that.
-        '''
+        
         if isinstance(self.impact_category , list)and isinstance(self.bw_heat, bd.backends.proxies.Activity)and isinstance(self.bw_electricity, bd.backends.proxies.Activity) :
             method_config= {'impact_categories':self.impact_category}
             
@@ -260,10 +286,10 @@ class steam_net:
                        )
             self.net_lca.lci()
             self.net_lca.lcia()
-        return self.calculate_impact(allocate)
+        return self.calculate_impact(allocate)'''
 
     def calculate_impact(self, allocate = 'credit'):    
-        self.impact ={}
+        """self.impact ={}
         
         if  isinstance(self.net_lca , bc.multi_lca.MultiLCA):
             for cat in self.impact_category:
@@ -280,8 +306,10 @@ class steam_net:
             elif allocate == 'by exergy':
                 self.impact= self.impact_heat* self.boiler_factor * self.alloc_ex
 
-        return self.impact
-        
+        #return self.impact
+        """
+        self.setup_functional_unit(self.allocate)
+        self.nw.get_lca_results()
 
     def plot_hs(self):
         # Initial Setup
