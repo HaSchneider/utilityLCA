@@ -2,4 +2,4 @@
 Contributors
 ============
 
-* Hannes Schneider <h.c.s@posteo.de>
+* Hannes Schneider <hannes.schneider@tu-braunschweig.de>
