@@ -1,32 +1,22 @@
 
 from tespy.networks import Network
-from tespy.components import (
-    #DiabaticCombustionChamber, Compressor, HeatExchanger, Condenser,
-    Turbine, Source, Sink, Pump, 
-    Pipeline, Pipe, CycleCloser, SimpleHeatExchanger, Valve, Merge, Splitter, Drum,
-    DropletSeparator
-)
+from tespy.connections import  Ref
 #from tespy.components.piping.pipe_group import Pipe_group
 
-from tespy.connections import Connection, Ref, Bus
+from . import steam_network_model as snwm
+
 from CoolProp.CoolProp import PropsSI
 import numpy as np 
 import matplotlib.pyplot as plt
 from fluprodia import FluidPropertyDiagram
-from tespy.tools.fluid_properties.wrappers import IAPWSWrapper
-
-from tespy.tools import ExergyAnalysis, helpers
-from tespy.tools.helpers import get_chem_ex_lib
 import bw2io as bi
 import bw2data as bd
 import bw2calc as bc
 import datetime
-import copy
 # [ ] steam in kg 
 
 
 class steam_net:
-
 
     def __init__(self):
         self.cond_inj = False
@@ -77,206 +67,13 @@ class steam_net:
         makeup_factor: factor of the amount of make up water default= 0.02 
         net_pressure: steam net pressure in bar
         '''
-        self.cond_inj = False
-        self.trap=False
-        self.converged =False
-
-        self.nw = Network()
-        self.nw.set_attr(iterinfo=False)
-        self.nw.set_attr(T_unit='C', p_unit='bar', h_unit='kJ / kg')
-        boiler = SimpleHeatExchanger('steam boiler' , dissipative=False)
-        bpt = Turbine('back pressure turbine')
-        pipe_warm =  Pipeline('steam pipe', dissipative=True)
-        cond_trap= DropletSeparator('condensate trap')
-        valve = Valve('controlvalve')
-        heat_sink = SimpleHeatExchanger('heat sink', dissipative=False)
-        pipe_cold= Pipeline('condensate pipe',dissipative=True)
-        feed_pump= Pump('feedpump')
-        cycl=CycleCloser('CycleCloser')
         
-        steam_sink = Sink('steam losses')
-        steam_leak= Splitter("steam leak")
-        makeup_leak =Source('leak makeup')
-        makeup_trap =Source('trap makeup')
-        makeup=Source("Make-up water")
-        blowdown= Sink("blowdown wastewater")
-        cond_waste= Sink("pipe condensate wastewater")
-        merge = Merge("Makeup water feed", num_in=3)
-        merge_injection = Merge("Injection")
-        split= Splitter("remove wastewater")
-
-        condensate_split= Splitter("split condensate")
-        condensate_drum= Drum('condensate injection drum')
-        condensate_sink = Sink('sink 1')
-        
-        dummy_sink2= Sink('dummy sink2')
-        injection_source =Source('injection_source')
-
-        c05 = Connection(cycl, 'out1', boiler, 'in1')
-        c04 = Connection(boiler, 'out1', bpt, 'in1')
-        c03 = Connection(bpt, 'out1', pipe_warm, 'in1')
-        c022= Connection(pipe_warm, 'out1', steam_leak, 'in1')
-        c02 = Connection(steam_leak, 'out1', valve, 'in1')
-
-        c_leak = Connection(steam_leak, 'out2', steam_sink, 'in1')
-        muw2 = Connection(makeup_leak, 'out1', merge, 'in3')
-
-        c01= Connection(valve, 'out1', heat_sink, 'in1')
-        c1 = Connection(heat_sink, 'out1', pipe_cold, 'in1')
-        c2 = Connection(pipe_cold, 'out1', split, 'in1')
-        c3 = Connection(split, 'out1', merge, 'in1')
-        c4 = Connection(merge, 'out1', feed_pump, 'in1')
-        c5 = Connection(feed_pump, 'out1', cycl, 'in1')
-
-        muw = Connection(makeup, 'out1', merge, 'in2')
-        wawa = Connection(split, 'out2', blowdown, 'in1')
-
-        self.nw.add_conns(c05, c04, c03, c022, c02, c01, 
-                    c_leak, 
-                    c1, c2, c3, c4, c5, 
-                    muw, wawa, muw2)
-        
-        boiler.set_attr(pr = 1)
-        c04.set_attr(fluid={"H2O": 1}, #fluid_engines={"H2O": IAPWSWrapper}, 
-                     h= self.h_superheating_max_pressure)#Td_bp=100)
-        c05.set_attr(p0=self.main_pressure,m0=self.heat/2700E3 )
-        bpt.set_attr(eta_s = 0.85, )
-        c03.set_attr(p=self.main_pressure, h0=self.h_superheating_max_pressure, m0=self.heat/2700E3)
-        pipe_warm.set_attr(pr=0.95, 
-            Tamb = self.Tamb, 
-            #kA= 300,
-            L=self.pipe_length, 
-            D='var',  
-            ks=4.57e-5,
-            insulation_thickness=self.insulation ,insulation_tc= 0.035, pipe_thickness=0.004,material='Steel', 
-            wind_velocity=self.wind_velocity, environment_media = self.environment_media
-                ) 
-        c_leak.set_attr(m=Ref(c022, self.leakage_factor, 0))
-        c01.set_attr(p = self.needed_pressure,h0=self.h_superheating_max_pressure, m0=self.heat/2700E3)#T=needed_temperature +5,
-
-        heat_sink.set_attr(pr=1,Q=-self.heat)
-        c1.set_attr(x=0,p0=self.needed_pressure,m0=self.heat/2700E3 )
-        pipe_cold.set_attr(pr=0.95, 
-            Tamb = self.Tamb, #kA= 300,
-            L=self.pipe_length, D='var',  ks=4.57e-5,
-            insulation_thickness=self.insulation ,insulation_tc= 0.035, 
-            pipe_thickness=0.004,material='Steel', 
-            wind_velocity= self.wind_velocity, environment_media = self.environment_media
-                )
-        feed_pump.set_attr(eta_s =0.9)
-
-        c4.set_attr(p0=self.needed_pressure,m0=self.heat/2700E3 )
-        
-        c5.set_attr(p=self.max_pressure, h0=self.h_superheating_max_pressure,m0=self.heat/2700E3 )
-
-        muw.set_attr(m=Ref(c04, self.makeup_factor, 0), 
-                     T=self.Tamb,
-                     fluid={"H2O": 1}, 
-                     #fluid_engines={"H2O": IAPWSWrapper}, 
-                     p0=self.needed_pressure)
-        muw2.set_attr(m=Ref(c_leak, 1, 0), 
-                      T=self.Tamb,
-                      fluid={"H2O": 1}, 
-                      #fluid_engines={"H2O": IAPWSWrapper},
-                      p0=self.needed_pressure)
-        
-        wawa.set_attr(m=Ref(c04, self.makeup_factor, 0))
-        
-        # bus definition:
-        
-        fuel_bus = Bus('boiler bus')
-        fuel_bus.add_comps({'comp':boiler, 'base':'bus'})
-        
-        turbine_bus = Bus('turbines')
-        turbine_bus.add_comps({'comp': bpt, 'base':'component','char': 0.97})
-
-        pipe_emission =Bus('pipe losses')
-        
-        pipe_emission.add_comps({'comp':pipe_cold,'char': 1},
-                            {'comp':pipe_warm,'char': 1})
-        
-        pipe_fugitive_emission = Bus('fugitive emission')
-        pipe_fugitive_emission.add_comps({'comp': steam_sink,'base':'component'})
-        
-        product_bus =Bus('heat bus')
-        product_bus.add_comps({'comp':heat_sink, 'char': 1},
-                            )
-
-        pump_bus = Bus('feedpump bus')
-        pump_bus.add_comps({'comp':feed_pump, 'base':'bus'})
-
-        makeup_bus= Bus('makeup water')
-        makeup_bus.add_comps({'comp':makeup, 'base':'bus'},
-                            {'comp':makeup_leak, 'base':'bus'},
-                            )
-        blowdown_bus=Bus('blowdown bus')
-        blowdown_bus.add_comps({'comp':blowdown, 'base':'component'})
-        #overall distribution losses of 20%: https://www.energy.gov/eere/iedo/manufacturing-energy-and-carbon-footprints-2018-mecs
-        
-        self.nw.add_busses(turbine_bus, 
-                    fuel_bus, 
-                    product_bus, 
-                    pipe_emission, 
-                    #pipe_fugitive_emission,
-                    makeup_bus,
-                    blowdown_bus,
-                    pump_bus)
-        self.nw.solve('design')
-    
-        #2. Run: 
-        muw.set_attr(T=None)
-        muw.set_attr(T=Ref(c2, 1, -20))
-        
-        #self.nw.solve('design')
-
-        #3. Run: implement condensate injection:
-        if c022.x.val ==-1:
-            self.nw.del_conns(c01, c1)
-            c01= Connection(valve, 'out1', merge_injection, 'in1')
-            cond_3 = Connection(injection_source, 'out1', merge_injection, 'in2')
-            #cond_4 = Connection(condensate_injection, 'out1', condensate_drum, 'in1')
-            cond_5 = Connection(merge_injection, 'out1', heat_sink, 'in1')
-
-            #cond_6 = Connection(condensate_drum, 'out1', condensate_sink, 'in1')
-            cond_1 = Connection(heat_sink, 'out1', condensate_split, 'in1')
-            cond_2 = Connection(condensate_split, 'out2', dummy_sink2, 'in1')
-            c1 = Connection(condensate_split, 'out1', pipe_cold, 'in1')
-            self.nw.add_conns(cond_1, cond_2, cond_3,cond_5,c01,c1)
-
-            c01.set_attr(p = self.needed_pressure)
-            cond_1.set_attr(x=0)
-            c1.set_attr(m=Ref(c01,1,0))
-            cond_3.set_attr(x=0, fluid={"H2O": 1}, )#fluid_engines={"H2O": IAPWSWrapper})
-            cond_5.set_attr(x=1)
-            #cond_6.set_attr(m=0)
-            self.nw.solve('design')
-            self.cond_inj =True
-        
-        elif 0< c022.x.val <1:
-            merge.set_attr(num_in=4)
-            self.nw.del_conns(c02)
-            muw3 = Connection(makeup_trap, 'out1', merge, 'in4')
-            c023= Connection(steam_leak, 'out1', cond_trap, 'in1')
-            c024= Connection(cond_trap, 'out2', valve, 'in1')
-            c_trap_waste = Connection(cond_trap, 'out1', cond_waste, 'in1')
-            
-            self.nw.add_conns(c023, c024, c_trap_waste, muw3)
-
-            muw3.set_attr(m=Ref(c_trap_waste, 1, 0), T=self.Tamb,fluid={"H2O": 1}, )#fluid_engines={"H2O": IAPWSWrapper})
-            self.nw.solve('design')
-            self.trap =True
-
-        self.ean = ExergyAnalysis(self.nw, 
-                        E_P=[ turbine_bus, product_bus], 
-                        E_F=[fuel_bus, pump_bus, makeup_bus, ],
-                        E_L=[pipe_fugitive_emission, blowdown_bus ]
-                        )
-        #ean.analyse(pamb=1, Tamb=20, Chem_Ex= get_chem_ex_lib("Ahrendts"))
-        
+        snwm.create_steam_net(self)
         self.result()
+
+
         self.converged=True
         self.initialized = True
-        self.old_nw = copy.deepcopy(self.nw)
 
     def recalculate_steam_net(self):
         self.calc_mains()
@@ -448,7 +245,9 @@ class steam_net:
         return self.calculate_impact(allocate)
 
     def calculate_background(self, allocate= 'credit'):
-        #calculate steam impact:
+        '''
+        Calculate LCA results for background system. Brightway datasets needs to be linked for that.
+        '''
         if isinstance(self.impact_category , list)and isinstance(self.bw_heat, bd.backends.proxies.Activity)and isinstance(self.bw_electricity, bd.backends.proxies.Activity) :
             method_config= {'impact_categories':self.impact_category}
             
