@@ -1,5 +1,5 @@
-from tespy.components import Source as tSource, Sink as tSink,PowerSource as tPowerSource , PowerSink as tPowerSink
-from tespy.connections import Bus
+from tespy.components import (Source as tSource, Sink as tSink,
+                              PowerSource as tPowerSource , PowerSink as tPowerSink)
 from tespy.networks import Network as tNetwork
 
 from tespy.tools import helpers as hlp
@@ -55,12 +55,7 @@ class Network(tNetwork):
             if hasattr(comp, 'bw_dataset'):
                 if isinstance(comp, (Sink, Source, PowerSource, PowerSink)):
                     self.technosphere_flows[comp.label]={comp.bw_dataset.id:1}
-             
-        #for label, bus in self.busses.items():
-        #    if isinstance(bus, Bus) and hasattr(bus, 'bw_dataset'):
-        #        self.technosphere_flows[bus.label]={bus.bw_dataset.id:1}
-        #else:
-        #    print('no functional units')    
+              
         data_objs = bd.get_multilca_data_objs(self.technosphere_flows, self.method_config)
         self.lca = bc.MultiLCA(demands=self.technosphere_flows,
                     method_config=self.method_config, 
@@ -93,13 +88,13 @@ class Network(tNetwork):
                     self.impact[cat] += impact * tespy_component.bw_direction
             self.impact_allocated[cat]={}
             if isinstance(self.functional_units, dict):
-                for fun in self.functional_units:
-                    func_flow, func_comp=self.get_reference_flow(self.functional_units[fun]['component'].label)
-                    self.impact_allocated[cat][fun] =self.impact[cat] *self.functional_units[fun]['allocationfactor']/func_flow*func_comp.bw_direction
-                
-            #elif self.get_reference_flow(self.functional_units.label)!= False:
-            #    func_flow, func_comp=self.get_reference_flow(self.functional_units.label)
-            #    self.impact[cat] = self.impact[cat]/func_flow*func_comp.bw_direction
+                for fun, fun_value in self.functional_units.items():
+                    func_flow, func_comp=self.get_reference_flow(fun_value['component'].label)
+                    self.impact_allocated[cat][fun] =(
+                        self.impact[cat] * 
+                        fun_value['allocationfactor']/
+                        func_flow*fun_value['direction']
+                        )
             else:
                 msg = ('No reference flow defined. Absolut impact calculated.'
                         'Call: set_functional_unit(functional_unit)' 
@@ -192,30 +187,5 @@ class Sink(tSink):
         self.bw_direction= bw_direction
 
     def set_functional_unit(self,functional_unit=True ):
-        """Set the functional unit flag for the component."""
-        self.functional_unit = functional_unit
-
-
-class Bus(Bus):
-    def __init__(self, label, **kwargs):
-        super().__init__(label, **kwargs)
-
-        self.functional_unit = False
-        self.bw_direction = 1
-
-    def link_bw(self, bw_dataset, bw_direction=1):
-        r'''
-        Link a brightway25 dataset to the Bus. 
-
-        Parameters
-        ----------
-        bw_dataset: bw_dataset. Dataset representing the background activity of the flow.
-        bw_direction: bool. Can be used for example for substitution of flows to invert the impact. 
-
-        '''
-        self.bw_dataset = bw_dataset
-        self.bw_direction= bw_direction
-        
-    def set_functional_unit(self,functional_unit: bool ):
         """Set the functional unit flag for the component."""
         self.functional_unit = functional_unit

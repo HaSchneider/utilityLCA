@@ -14,51 +14,58 @@ import bw2data as bd
 import bw2calc as bc
 import datetime
 # [ ] steam in kg 
-
+# [ ] add function to get impact per main
+import copy
 
 class steam_net:
 
     def __init__(self):
-        self.cond_inj = False
-        self.trap=False # droplet seperator if steam is not saturated at point of use (due to losses in pipe)
         self.nw = Network()
         self.old_nw = Network()
+        # convergence flags:
+        self.converged =False
+        self.initialized = False
+        self.cond_inj = False
+        self.trap=False # droplet seperator if steam is not saturated at point of use (due to losses in pipe)
+        
+        # Steam net properties:
         self.makeup_factor=0.05 # also known as condensate return factor. 
         self.Tamb=20
         self.leakage_factor=0.075 #https://invenoeng.com/steam-system-thermal-cycle-efficiency-a-important-benchmark-in-the-steam-system/
-        self.mains=[4,8, 16, 40]
+        self.mains=[4,8, 16, 40] # in bara
+        self.main_dict={}
         self.max_pressure =100
-        self.impact_heat = 0.115634 # kg co2/ MJ   Wärme-Prozess-mix-DE-Chem-Industrie-brutto-2000 
-        self.impact_elec = 0.110173 # kg co2/ MJ  Netz-el-DE-Verbund-HS-2020 
-        #self.impact_heat_ei= 0.11225 # kg co2 /MJ steam production, as energy carrier, in chemical industry
-        #self.impact_elec_ei = 0.11797 # kg co2 /MJ market for electricity, high voltage DE
+        self.needed_pressure = 0
+        self.main_pressure = 0
+        self.h_superheating_max_pressure = 0
+        self.heat=0
+        # Pipe specific:
+        self.wind_velocity=10
+        self.insulation = 0.1
+        self.environment_media = 'air'
+        self.pipe_length = 1000 # in m
+        #self.sections =10
+        
+        # result properties:
         self.elec_factor =0
         self.boiler_factor =0
         self.losses=0
         self.alloc_ex=0
         self.E_bpt =0
         self.E_hs=0
-        #steam net data:
-        self.wind_velocity=10
-        self.insulation = 0.1
-        self.environment_media = 'air'
-        self.pipe_length = 1000 # in m
-        self.sections =10
-        self.needed_pressure = 0
-        self.main_pressure = 0
-        self.h_superheating_max_pressure = 0
-        self.heat=0
+        
         
         # LCA:
-        self.bw_heat = None
-        self.bw_electricity = None
-        self.bw_water_treatment = None
-        self.impact_category = None
-        self.net_lca = None
-        
-        self.converged =False
+        #self.bw_heat = None
+        #self.bw_electricity = None
+        #self.bw_water_treatment = None
+        self.use_bw=False
+        self.impact_heat = 0.115634 # kg co2/ MJ   Wärme-Prozess-mix-DE-Chem-Industrie-brutto-2000 
+        self.impact_elec = 0.110173 # kg co2/ MJ  Netz-el-DE-Verbund-HS-2020 
         self.dataset_correction =1#correction factor if bw dataset already include steam net losses
-        self.initialized = False
+        self.impact_category = None
+        #self.net_lca = None
+        self.init_mains()
 
     def calc_steam_net(self):
         '''
@@ -91,8 +98,8 @@ class steam_net:
         self.old_nw = self.nw
 
     def result(self):
-
-        c_leak = self.nw.get_conn('c_leak')#conns.loc["steam leak:out2_steam losses:in1"]['object']
+        # TODO check allocation by exergy
+        c_leak = self.nw.get_conn('c_leak')
         c02 = self.nw.get_conn('c02')
         c03 = self.nw.get_conn('c03')
         cond_5 = self.nw.get_conn('cond_5')
@@ -115,7 +122,7 @@ class steam_net:
         self.watertreatment_factor = abs(muw.m.val/hex_heat_sink.E.val)
         #calc exergy reduction:
         
-        self.E_bpt= -turbine_grid.E.val#((c04.h.val*1000 -c03.h.val*1000) - self.Tamb* (c03.s.val - c04.s.val) )* c03.m.val
+        self.E_bpt= turbine_grid.E.val#((c04.h.val*1000 -c03.h.val*1000) - self.Tamb* (c03.s.val - c04.s.val) )* c03.m.val
         if self.cond_inj:
             self.E_hs= ((cond_5.h.val*1000 -cond_1.h.val*1000) - (self.Tamb+273)* (cond_5.s.val - cond_1.s.val))* cond_5.m.val
         else:
@@ -129,6 +136,7 @@ class steam_net:
         
 
     def export_bw_dataset(self, database=None, dataset_correction=1):
+        # TODO move to bw_link_2_tespy
         if not self.converged:
             raise Exception("Steam net is not calculated yet.") 
         
@@ -214,6 +222,14 @@ class steam_net:
         ).save()
         
         return code
+    def init_mains(self):
+        self.mains.sort()
+        self.main_dict={}
+        for pres in self.mains:
+            self.main_dict[str(pres)] = {}
+            self.main_dict[str(pres)]['pressure'] = pres
+            self.main_dict[str(pres)]['temperature'] =PropsSI('T', 'P', pres*1E5, 'Q', 1, 'IF97::water') - 273.15 # in °C
+            self.main_dict[str(pres)]['impact'] = None
     def calc_mains(self):
         
         self.mains.sort()
@@ -224,7 +240,12 @@ class steam_net:
             print('needed pressure larger than net pressure!')
         self.main_pressure = min((x for x in self.mains if x >= self.needed_pressure*1.01), default=None) 
         #print(f'self.main_pressure: {self.main_pressure}', f'self.needed_pressure: {self.needed_pressure}')
-        
+        #self.main_dict={}
+        for pres in self.mains:
+            #self.main_dict[str(pres)] = {}
+            self.main_dict[str(pres)]['pressure'] = pres
+            self.main_dict[str(pres)]['temperature'] =PropsSI('T', 'P', pres*1E5, 'Q', 1, 'IF97::water') - 273.15 # in °C
+            
 
     def generate_steam_net(self, needed_temperature,heat= 1000E3,  allocate='credit'):
         self.needed_temperature =needed_temperature
@@ -244,12 +265,13 @@ class steam_net:
         #return self.calculate_impact(allocate)
     def setup_bw_link(self, bw_heat, bw_electricity):
         self.nw.get_comp('boiler powersource').link_bw(bw_heat)
-        self.nw.get_comp('grid').link_bw(bw_electricity)
-        #todo add water, 
-        #if isinstance(self.impact_category, list):
-        #    self.nw.calc_background_impact(self.impact_category)
-        #else:
-        #    print('Impact category not defined as a list of categories.')
+        self.nw.get_comp('grid').link_bw(bw_electricity, -1)
+        self.nw.get_comp('feedpump powersource').link_bw(bw_electricity)
+        #todo add water,
+        if isinstance(self.impact_category, list):
+            self.nw.calc_background_impact(self.impact_category)
+        else:
+            print('Impact category not defined as a list of categories.')
 
     def setup_functional_unit(self, allocation):
         
@@ -263,51 +285,35 @@ class steam_net:
             self.nw.get_comp('grid').functional_unit = True
             functional_units={
                 'distributed steam':{'component': self.nw.get_comp('heat sink'),
-                             'allocationfactor': self.alloc_ex},
-                'substituted electricity':{'component': self.nw.get_comp('grid'),
-                             'allocationfactor': 1-self.alloc_ex}
+                             'allocationfactor': self.alloc_ex,
+                             'direction':1},
+                'electricity from steam main':{'component': self.nw.get_comp('grid'),
+                             'allocationfactor': 1-self.alloc_ex,
+                             'direction':1}
             }
 
         self.nw.set_functional_unit(functional_units)
-
-    '''def calculate_background(self, allocate= 'credit'):
-        
-        Calculate LCA results for background system. Brightway datasets needs to be linked for that.
-        
-        if isinstance(self.impact_category , list)and isinstance(self.bw_heat, bd.backends.proxies.Activity)and isinstance(self.bw_electricity, bd.backends.proxies.Activity) :
-            method_config= {'impact_categories':self.impact_category}
-            
-            functional_units = {"process heat": {self.bw_heat.id: 1},
-                                "electricity": {self.bw_electricity.id: 1}}
-            data_objs_steam = bd.get_multilca_data_objs(functional_units, method_config)
-            self.net_lca = bc.MultiLCA(demands=functional_units,
-                       method_config=method_config, 
-                       data_objs=data_objs_steam
-                       )
-            self.net_lca.lci()
-            self.net_lca.lcia()
-        return self.calculate_impact(allocate)'''
-
-    def calculate_impact(self, allocate = 'credit'):    
-        """self.impact ={}
-        
-        if  isinstance(self.net_lca , bc.multi_lca.MultiLCA):
-            for cat in self.impact_category:
-                
+ 
+    def calculate_mains_impact(self, allocate='credit'):
+        #self.calc_mains()
+        if not self.use_bw:
+            for pres, main in self.main_dict.items():
+                self.generate_steam_net(main['temperature']-5, allocate=allocate)
+                self.result()
+                impact = self.impact_heat * self.dataset_correction * self.boiler_factor
                 if allocate == 'credit':
-                    self.impact[cat]= self.net_lca.scores[(cat, 'process heat')]* self.boiler_factor - self.net_lca.scores[(cat, 'electricity')]*self.elec_factor /3.6 #if impact/kWh
+                    self.main_dict[pres]['impact'] = impact - self.impact_elec * self.dataset_correction* self.elec_factor
                 elif allocate == 'by exergy':
-                    self.impact[cat]= self.net_lca.scores[(cat, 'process heat')]* self.boiler_factor * self.alloc_ex
+                    self.main_dict[pres]['impact'] = impact *self.alloc_ex 
+                
+        else:
+            pass
 
-            
-        else: #self.impact_category == None or : #no bw dataset. use impact_heat/impact_elec factors for category climate change:
-            if allocate == 'credit':
-                self.impact= self.impact_heat* self.boiler_factor - self.impact_elec*self.elec_factor
-            elif allocate == 'by exergy':
-                self.impact= self.impact_heat* self.boiler_factor * self.alloc_ex
-
-        #return self.impact
-        """
+    def calculate_impact(self, allocate = None):
+        
+        if isinstance(allocate, str):
+            if allocate in ['credit', 'by exergy']:
+                self.allocate = allocate    
         self.setup_functional_unit(self.allocate)
         self.nw.get_lca_results()
 
