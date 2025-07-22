@@ -13,12 +13,13 @@ import warnings
 class SimModel(ABC):
     
     @abstractmethod
-    def __init__(self, **model_params) -> dict:
+    def __init__(self, **model_params):
         '''
         Abstract method to init the class. Creates a technosphere dict, wich nedds to be filled by interface class.
         '''
         self.ureg=pint.UnitRegistry()
-        return {}
+        self.params= model_params
+        
     @abstractmethod
     def calculate_model(self, **model_params):
         '''
@@ -189,9 +190,9 @@ class modelInterface(BaseModel, ABC):
             except Exception as e:
                 warnings.warn(f"No valid source Unit: {e}. Trying dataset unit instead...",UserWarning)
                 try:
-                    if ex.type == 'input':
+                    if ex.target == self.model:
                         return amount.m_as(ex.source.get('unit'))
-                    elif ex.type =='output':
+                    elif ex.source ==self.model:
                         return amount.m_as(ex.target.get('unit'))
                     elif ex.type =='product':
                         return amount.m
@@ -200,9 +201,9 @@ class modelInterface(BaseModel, ABC):
                     return amount.m
         elif ex.model_unit!=None and ex.model_unit in self.model.ureg:
             try:
-                if ex.type == 'input':
+                if ex.target == self.model:
                     return self.model.ureg.Quantity(amount, ex.model_unit).m_as(ex.source.get('unit'))
-                elif ex.type =='output':
+                elif ex.source ==self.model:
                     return self.model.ureg.Quantity(amount, ex.model_unit).m_as(ex.target.get('unit'))
                 elif ex.type =='product':
                     return amount
