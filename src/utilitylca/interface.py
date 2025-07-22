@@ -1,56 +1,31 @@
 import bw2data as bd
 import bw2calc as bc
 from abc import ABC, abstractmethod
-from pydantic import BaseModel, ConfigDict
-from typing import Dict, Union
+from pydantic import BaseModel, ConfigDict, PrivateAttr
+from typing import Dict, Union, Optional,Callable
 #from bw_interface_schema import models as schema
 import datetime
 import pint
 import warnings
 
 
-class technosphere_flow(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    source: Union[bd.backends.proxies.Activity, str]
-    target: Union[bd.backends.proxies.Activity, str, None] =None
-    amount: Union[pint.Quantity, float]
-    source_unit: Union[pint.Unit, str, None] =None
-    comment: Union[str, dict[str, str], None] = None
-    allocationfactor: Union[float, None]= None
-
-class activity_model(ABC):
-    '''abstract class for external activity models for brightway25'''
-    #TODO: validation
-
-    def __init__(self, name, **params):
-        self.name = name
-        self.params=params
-        self.technosphere=None
-        self.elementary_flows=None
-        self.functional_unit=None
-        self.model = None
-        self.methods=[]
-        self.converged=False
-        self.initialized = False
-        self.ureg = pint.UnitRegistry()
-
+class SimModel(ABC):
+    
     @abstractmethod
-    def init_model(self, **model_params):
+    def __init__(self, **model_params) -> dict:
         '''
-        Abstract method to Create a model based on the parameters provided.
-        
+        Abstract method to init the class. Creates a technosphere dict, wich nedds to be filled by interface class.
         '''
-        self.model=None
-
+        self.ureg=pint.UnitRegistry()
+        return {}
     @abstractmethod
     def calculate_model(self, **model_params):
         '''
         Abstract method to calculate the model based on the parameters provided.
-        
         '''
         pass
-    
+
     @abstractmethod
     def link_technosphere(self, datasets: dict) -> dict:
         '''
@@ -72,7 +47,7 @@ class activity_model(ABC):
         
         technosphere={}
         return technosphere
-
+    
     @abstractmethod    
     def link_elementary_flows(self, elementary_flows) -> dict:
         pass
@@ -94,14 +69,60 @@ class activity_model(ABC):
         # Placeholder for actual setup logic
         functional_unit = {}
         return functional_unit
+    
+    def get_technosphere(self):
+        return self.technosphere
+    
+class technosphere_flow(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    def setup_link(self, datasets, elementary_flows):
-        if self.model is None:
-            self.init_model()   
+    source: Union[bd.backends.proxies.Activity, SimModel, None]
+    target: Union[bd.backends.proxies.Activity, SimModel, None] =None
+    amount: Union[pint.Quantity, float,Callable]
+    model_unit: Union[pint.Unit, str, None] =None
+    comment: Union[str, dict[str, str], None] = None
+    description: Union[str, dict[str, str], None] = None
+    allocationfactor: Union[float, None]= None
+    functional: bool = False
+    type: str 
+    name: str
 
-        self.technosphere= self.link_technosphere(datasets)
-        self.elementary_flows= self.link_elementary_flows(elementary_flows)
-        self.functional_unit = self.setup_functional_unit()
+class modelInterface(BaseModel, ABC):
+    '''class for interface external activity models with brightway25'''
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    
+    model: SimModel
+    name: str
+
+    technosphere: Dict[str, technosphere_flow]={}
+    elementary_flows: Dict[str, technosphere_flow]={}
+    params: Optional[Dict[str, Union[float, int, bool, str]]]=None
+    methods: list=[]
+    converged: bool= False
+    ureg: pint.UnitRegistry=pint.UnitRegistry()
+    method_config: Dict={}
+    impact_allocated: Dict={}
+    impact: dict={}
+    lca: Optional[bc.MultiLCA]=None
+
+    def __init__(self, name, model):
+        super().__init__(name=name, model=model)
+        #self.name = name
+        self.technosphere= self.model.get_technosphere()
+        self.params = self.model.params
+
+    def update_flows(self):
+        for name,flow   in self.technosphere.items():
+            name.amount = self.model.technosphere[name].amount
+
+    def setup_link(self):
+        if len(self.model.technosphere) != len(self.technosphere):
+            raise ValueError("Length of model technosphere matches not the length of ")
+
+
+        self.technosphere= self.model.link_technosphere(self.technosphere)
+        self.elementary_flows= self.model.link_elementary_flows(self.elementary_flows)
+        self.functional_unit = self.model.setup_functional_unit()
 
     def calculate_background_impact(self):
         '''
@@ -112,7 +133,8 @@ class activity_model(ABC):
         
         background_flows={}
         for name, ex in self.technosphere.items():
-            background_flows[name]= {ex.source.id:1}
+            if not ex.functional:
+                background_flows[name]= {ex.source.id:1}
         # Placeholder for actual calculation logic
         self.method_config= {'impact_categories':self.methods}
 
@@ -137,36 +159,61 @@ class activity_model(ABC):
         for cat in self.method_config['impact_categories']:
             self.impact[cat] = 0
             for name, ex  in self.technosphere.items():
-                impact=0
-                if callable(ex.amount):
-                    amount=ex.amount()
-                else:
-                    amount= ex.amount
-                # check for unit and transform it in the correct unit if possible.
-                if isinstance(amount, pint.Quantity):
-                    try:
-                        impact =self.lca.scores[(cat, name)] *amount.m_as(ex.source_unit)
-                    except Exception as e:
-                        warnings.warn(f"No valid source Unit: {e}. Trying dataset unit instead...",UserWarning)
-                        try:
-                            impact =self.lca.scores[(cat, name)] *amount.m_as(ex.source.get('unit'))
-                        except Exception as e:
-                            warnings.warn(f"Even the dataset got no valid source Unit: {e}. Ignore unit transformation.")
-                            impact = self.lca.scores[(cat, name)]* amount.m
-                else:
-                    warnings.warn('no unit check possible. Use pint units if possible.')
-                    impact = self.lca.scores[(cat, name)]*amount
-                self.impact[cat] += impact 
+                
+                if ex.functional:
+                    continue
+
+                self.impact[cat] += self.lca.scores[(cat, name)]*self._get_flow_value(ex)  
             self.impact_allocated[cat]={}
-            if isinstance(self.functional_unit, dict):
-                for fun, fun_value in self.functional_unit.items():
-                    
-                    self.impact_allocated[cat][fun] =(
+            #if isinstance(self.functional_unit, dict):
+            for name, ex in self.technosphere.items():
+                if not ex.functional:
+                    continue
+                else:
+                    self.impact_allocated[cat][name] =(
                         self.impact[cat] * 
-                        fun_value.allocationfactor/fun_value.amount.m
+                        ex.allocationfactor/self._get_flow_value(ex)
                         )
         return self.impact_allocated
     
+    def _get_flow_value(self, ex):
+        if callable(ex.amount):
+            amount=ex.amount()
+        else:
+            amount= ex.amount
+        # check for unit and transform it in the correct unit if possible.
+        
+        if isinstance(amount, pint.Quantity):
+            try:
+                return amount.m_as(ex.source_unit)
+            except Exception as e:
+                warnings.warn(f"No valid source Unit: {e}. Trying dataset unit instead...",UserWarning)
+                try:
+                    if ex.type == 'input':
+                        return amount.m_as(ex.source.get('unit'))
+                    elif ex.type =='output':
+                        return amount.m_as(ex.target.get('unit'))
+                    elif ex.type =='product':
+                        return amount.m
+                except Exception as e:
+                    warnings.warn(f"Even the dataset got no valid source Unit: {e}. Ignore unit transformation.", UserWarning)
+                    return amount.m
+        elif ex.model_unit!=None and ex.model_unit in self.model.ureg:
+            try:
+                if ex.type == 'input':
+                    return self.model.ureg.Quantity(amount, ex.model_unit).m_as(ex.source.get('unit'))
+                elif ex.type =='output':
+                    return self.model.ureg.Quantity(amount, ex.model_unit).m_as(ex.target.get('unit'))
+                elif ex.type =='product':
+                    return amount
+
+            except Exception as e:
+                    warnings.warn(f"Even the dataset got a valid pint Unit: {e}. Ignore unit transformation.", UserWarning)
+                    return amount
+        else:
+            warnings.warn('no unit check possible. Use pint units if possible or provide pint compatible model unit name.',UserWarning)
+            return amount
+
     def export_to_bw(self, database=None, identifier=None):
         if not hasattr(self, 'impact_allocated'):
             self.calculate_impact()
@@ -206,3 +253,4 @@ class activity_model(ABC):
             ).save()
         
         return code
+    
