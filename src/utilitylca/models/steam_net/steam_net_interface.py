@@ -4,7 +4,7 @@ from tespy.connections import  Ref
 
 #from tespy.components.piping.pipe_group import Pipe_group
 from ... import interface as link
-from . import steam_network_model_interface as snwm
+from . import steam_network_model as snwm
 
 from CoolProp.CoolProp import PropsSI
 import numpy as np 
@@ -16,10 +16,7 @@ from fluprodia import FluidPropertyDiagram
 import copy
 
 class steam_net(link.SimModel):
-
-    def __init__(self,  **params):
-        super().__init__()
-        # convergence flags:
+    def init_model(self, **params):
         self.cond_inj = False
         self.trap=False # droplet seperator if steam is not saturated at point of use (due to losses in pipe)
         
@@ -49,13 +46,9 @@ class steam_net(link.SimModel):
         self.E_bpt =0
         self.E_hs=0
 
-        self.impact_category = None
-
-    #def init_model(self, **params):
-        print(self.params)
         self.converged = False
-        self.init_mains()
-        self.calc_mains()
+        self._init_mains()
+        self._calc_mains()
         self.model= Network()
         self.initialized = True
         #return self.calculate_impact(allocate)
@@ -97,7 +90,7 @@ class steam_net(link.SimModel):
         else:
             raise Exception('Steam net calculation failed. Please give it another try!')
            
-        self.result()
+        self._result()
 
         self.converged=True
     def set_technosphere(self):
@@ -109,51 +102,42 @@ class steam_net(link.SimModel):
                 name='steam generation',
                 source= None,
                 target=self,
-                amount= self.model.get_conn("e_boil").E.val,
+                amount= self.ureg.Quantity(self.model.get_conn("e_boil").E.val, 
+                                           self.model.get_conn("e_boil").E.unit)*self.ureg.second ,
                 type= 'input'),
             'electricity grid':link.technosphere_flow(
                 name='electricity grid',
                 source= None,
                 target=self,
-                amount= self.model.get_conn("e_pump").E.val,
+                amount= self.ureg.Quantity(self.model.get_conn("e_pump").E.val, 
+                                           self.model.get_conn("e_pump").E.unit)*self.ureg.second ,
                 type= 'input'),
             'electricity substitution':link.technosphere_flow(
                 name='electricity substitution',
                 source= self,
                 target= None,
-                amount= -self.model.get_conn("e_turb_grid").E.val,
+                amount= self.ureg.Quantity(-self.model.get_conn("e_turb_grid").E.val, 
+                                           self.model.get_conn("e_turb_grid").E.unit)*self.ureg.second ,
                 type= 'substitution'),
             'distributed steam':link.technosphere_flow(
                 name='distributed steam',
                 source= self,
                 target = None,
-                amount=self.model.get_conn("e_heat_sink").E.val,
+                amount= self.ureg.Quantity(self.model.get_conn("e_heat_sink").E.val, 
+                                           self.model.get_conn("e_heat_sink").E.unit)*self.ureg.second ,
                 functional = True,
                 type= 'product',
                 allocationfactor=1,
                 model_unit='MJ')
             } 
-    def link_technosphere(self):
-        pass
     
-    def link_elementary_flows(self, elementary_flows):
+    def set_elementary_flows(self, elementary_flows):
         return {}
 
-    def setup_functional_unit(self):
-        
-        # Placeholder for actual setup logic
-        functional_unit = {'distributed steam':{
-            'amount':self.model.get_conn("e_heat_sink").E.val,
-            'allocationfactor':1,
-            'unit':'MJ'}
-        }
-        return functional_unit
-
-
-    def recalculate_steam_net(self, **params):
+    def recalculate_model(self, **params):
         for p in params:
             self.params[p] =params[p]
-        self.calc_mains()
+        self._calc_mains()
         self.change_parameters()
         if not self.converged:
             self.model = self.old_nw
@@ -163,14 +147,14 @@ class steam_net(link.SimModel):
             self.model.solve('design')
         except:
             return np.nan 
-        self.result()
+        self._result()
         #self.calculate_impact()
         self.converged=True
         self.old_nw = self.model
 
         return self.technosphere
 
-    def result(self):
+    def _result(self):
         # TODO check allocation by exergy
         c_leak = self.model.get_conn('c_leak')
         c02 = self.model.get_conn('c02')
@@ -202,11 +186,11 @@ class steam_net(link.SimModel):
         
         self.alloc_ex = self.E_hs /(self.E_hs + self.E_bpt)
 
-    def calc_pressure(self):
+    def _calc_pressure(self):
         self.needed_pressure= PropsSI('P','Q',0,'T',self.params['needed_temperature']+273,'IF97::water')*1E-5
         #needed_enthalpy= PropsSI('H','Q',0,'T',self.params['needed_temperature']+273,'IF97::water')
         
-    def init_mains(self):
+    def _init_mains(self):
         self.params['mains'].sort()
         self.main_dict={}
         for pres in self.params['mains']:
@@ -214,9 +198,9 @@ class steam_net(link.SimModel):
             self.main_dict[str(pres)]['pressure'] = pres
             self.main_dict[str(pres)]['temperature'] =PropsSI('T', 'P', pres*1E5, 'Q', 1, 'IF97::water') - 273.15 # in °C
             self.main_dict[str(pres)]['impact'] = None
-    def calc_mains(self): 
+    def _calc_mains(self): 
         self.params['mains'].sort()
-        self.calc_pressure()
+        self._calc_pressure()
         s_superheating_max_pressure=  PropsSI('S','P',self.params['mains'][0]*1E5,'Q',1,'IF97::water') 
         self.h_superheating_max_pressure=  PropsSI('H','P',self.params['max_pressure']*1E5,'S',s_superheating_max_pressure,'IF97::water') *1E-3
         if self.needed_pressure*1.05 > self.params['mains'][-1]:

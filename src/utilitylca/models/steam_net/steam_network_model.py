@@ -1,15 +1,13 @@
 from tespy.components import (
     Turbine, Source, Sink, Pump, 
     Pipe, CycleCloser, SimpleHeatExchanger, Valve, Merge, 
-    Splitter, Drum,
+    Splitter, 
     DropletSeparator,
-    PowerSink, PowerSource, Generator, Motor, PowerBus
+    PowerSink, PowerSource, Generator,  PowerBus
 )
-from tespy.networks import Network
-from tespy.tools import ExergyAnalysis
+
 from tespy.tools.fluid_properties.wrappers import IAPWSWrapper
-from tespy.connections import Connection, Ref, Bus, PowerConnection
-import bw2link2tespy as bw2t
+from tespy.connections import Connection, Ref, PowerConnection
 import copy
 
 def create_steam_net(steam_lca):
@@ -17,7 +15,7 @@ def create_steam_net(steam_lca):
     steam_lca.trap=False
     steam_lca.converged =False
 
-    #steam_lca.model = bw2t.Network()
+    #steam_lca.model = Network()
     steam_lca.model.set_attr(iterinfo=False)
     steam_lca.model.set_attr(T_unit='C', p_unit='bar', h_unit='kJ / kg')
     # create components
@@ -31,13 +29,13 @@ def create_steam_net(steam_lca):
     feed_pump= Pump('feedpump')
     cycl=CycleCloser('CycleCloser')
     
-    steam_losses = bw2t.Sink('steam losses')
+    steam_losses = Sink('steam losses')
     steam_leak= Splitter("steam leak")
-    makeup_leak =bw2t.Source('leak makeup')
-    makeup_trap =bw2t.Source('trap makeup')
-    makeup=bw2t.Source("Make-up water")
-    blowdown= bw2t.Sink("blowdown wastewater")
-    cond_waste= bw2t.Sink("pipe condensate wastewater")
+    makeup_leak =Source('leak makeup')
+    makeup_trap =Source('trap makeup')
+    makeup=Source("Make-up water")
+    blowdown= Sink("blowdown wastewater")
+    cond_waste= Sink("pipe condensate wastewater")
     merge = Merge("Makeup water feed", num_in=3)
     merge_injection = Merge("Injection")
     split= Splitter("remove wastewater")
@@ -46,8 +44,8 @@ def create_steam_net(steam_lca):
     #condensate_drum= Drum('condensate injection drum')
     #condensate_sink = Sink('sink 1')
     
-    dummy_sink2= bw2t.Sink('dummy sink2')
-    injection_source =bw2t.Source('injection_source')
+    dummy_sink2= Sink('dummy sink2')
+    injection_source =Source('injection_source')
 
     #create connections:
     c05 = Connection(cycl, 'out1', boiler, 'in1')
@@ -132,27 +130,27 @@ def create_steam_net(steam_lca):
     
     # create power connections:
     
-    fuel_bus = bw2t.PowerSource('boiler powersource')
+    fuel_bus = PowerSource('boiler powersource')
     e_boil = PowerConnection(fuel_bus, 'power', boiler, 'heat', label= 'e_boil')
     
     turbine_gen = Generator('turbines')
     turbine_gen.set_attr(eta= 0.9)
-    turbine_grid = bw2t.PowerSink('grid')
+    turbine_grid = PowerSink('grid')
     e_turb = PowerConnection(bpt, 'power', turbine_gen, 'power_in', label='e_turb')
     e_turb_grid =PowerConnection(turbine_gen, 'power_out', turbine_grid, 'power', 
                                 label='e_turb_grid')
 
-    pipe_diss_sink =bw2t.PowerSink('pipe dissipative losses sink')
+    pipe_diss_sink =PowerSink('pipe dissipative losses sink')
     pipe_diss_bus = PowerBus('pipe dissipative losses bus', num_in =2, num_out=1)
 
     e_pi_h = PowerConnection(pipe_warm, 'heat', pipe_diss_bus, 'power_in1')
     e_pi_c = PowerConnection(pipe_cold, 'heat', pipe_diss_bus, 'power_in2')
     e_pi_sink = PowerConnection(pipe_diss_bus, 'power_out1', pipe_diss_sink, 'power', label='e_pi_sink')
     
-    heat_sink =bw2t.PowerSink('heat sink')
+    heat_sink =PowerSink('heat sink')
     e_heat_sink =PowerConnection( hex_heat_sink,'heat',heat_sink, 'power', label='e_heat_sink')
 
-    pump_psource = bw2t.PowerSource('feedpump powersource')
+    pump_psource = PowerSource('feedpump powersource')
     e_pump = PowerConnection(pump_psource, 'power', feed_pump, 'power', label='e_pump')
 
 
