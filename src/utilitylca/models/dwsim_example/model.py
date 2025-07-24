@@ -14,7 +14,7 @@ from DWSIM.Automation import Automation3
 from DWSIM.GlobalSettings import Settings
 
 class dwsim_model(link.SimModel):
-    def init_model(self, dwsimpath **params):
+    def init_model(self, dwsimpath, **params):
         '''
         dwsim_path: Path to the DWSIM executable. Should be something like:
         C:\\Users\\USERNAME\\AppData\\Local\\DWSIM\\
@@ -88,32 +88,34 @@ class dwsim_model(link.SimModel):
 
         print(String.Format("Heater Heat Load: {0} kW", self.model.GetObject('heater').GetAsObject().DeltaQ))
 
-    
-    def set_technosphere(self):
-        self.technosphere={
-            'thermal energy demand':link.technosphere_flow(name= 'thermal energy demand', 
+    @property
+    def technosphere(self):
+        technosphere={
+            'thermal energy demand':link.technosphere_edge(name= 'thermal energy demand', 
                                                     source = None,
                                                     target = self,
                                                     amount= self.model.GetObject('power').GetAsObject().GetEnergyFlow, 
                                                                                 #self.model.GetObject('power').GetAsObject().GetPropertyUnit('PROP_ES_0'))*self.ureg.second,
                                                     model_unit=f'{self.model.GetObject('power').GetAsObject().GetPropertyUnit('PROP_ES_0')} * second',
-                                                    type= 'input',
+                                                    type= link.technosphereTypes.input,
 
                                                            ),
-            'heated flow': link.technosphere_flow(name= 'thermal energy demand',
+            'heated flow': link.technosphere_edge(name= 'thermal energy demand',
                                                     source= self,
                                                     target = None,
                                                     amount= self.model.GetObject('outlet').GetAsObject().GetMassFlow, 
                                                             #                 self.model.GetObject('outlet').GetAsObject().GetPropertyUnit('PROP_MS_2')),
                                                     model_unit=self.model.GetObject('outlet').GetAsObject().GetPropertyUnit('PROP_MS_2'),
-                                                    type='product',
+                                                    type=link.technosphereTypes.product,
                                                     allocationfactor= 1.0,
                                                     functional= True)
         }
-        return self.technosphere
+        return technosphere
     
-    def set_elementary_flows(self, elementary_flows) -> dict:
+    @property
+    def elementary_flows(self):
         return {}
+    
     def recalculate_model(self, **model_params):
         '''
         Abstract method to recalculate the model based on the parameters provided.

@@ -1,18 +1,18 @@
 import bw2data as bd
 import bw2calc as bc
 from abc import ABC, abstractmethod
-from pydantic import BaseModel, ConfigDict
-from typing import Dict, Union, Optional,Callable
+from pydantic import BaseModel, ConfigDict, Field, JsonValue
+from typing import Dict, Union, Optional,Callable, Annotated, Literal
 import datetime
 import pint
 import warnings
+from enum import StrEnum
 
 class SimModel(ABC):
     def __init__(self, name, **model_params):
         self.name = name
         self.ureg=pint.UnitRegistry()
         self.params= model_params
-        self.technosphere={}
         self.location = 'GLO'
     
     @abstractmethod
@@ -36,55 +36,97 @@ class SimModel(ABC):
         Abstract method to recalculate the model based on the parameters provided.
         '''
         pass
-
+    
+    @property
     @abstractmethod
-    def set_technosphere(self) -> dict:
+    def technosphere(self):
         '''
-        Abstract method to define the model technosphere flows. 
+        Abstract property to define the model technosphere flows. 
         Creates a technosphere dict, wich nedds to be filled by interface class with brightway datasets.
 
         Returns:
         Dict of the schema:
         technosphere= {'model_flow name': technosphere_flow }
         '''
-        
-        self.technosphere={}
-        
+        return {}
     
+    @property
     @abstractmethod    
-    def set_elementary_flows(self) -> dict:
+    def elementary_flows(self) -> dict:
         '''
-        Abstract method to define the model biosphere flows. 
+        Abstract property to define the model biosphere flows. 
         
         Returns:
         Dict of the schema:
         biosphere= {'model_flow name': biosphere_flow }
         '''
-        pass
+        return {}
     
     def get_technosphere(self):
         '''
+        TODO might be unncessary as abstract property works as a getter function.
         Method to get the current technosphere dict. 
         Needs to be executed when the model gets recalculated and no callable objects are used.
         
         '''
-        
         return self.technosphere
     
-class technosphere_flow(BaseModel):
+class QuantitativeEdgeTypes(StrEnum):
+    technosphere = "technosphere"
+    biosphere = "biosphere"
+    characterization = "characterization"
+    weighting = "weighting"
+    normalization = "normalization"
+    
+class technosphereTypes(StrEnum):
+    product= "product"
+    substitution= "substitution"
+    input= "input"
+    output= "output"
+
+class Edge(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    source: Union[bd.backends.proxies.Activity, SimModel, None]
-    target: Union[bd.backends.proxies.Activity, SimModel, None] =None
+    edge_type: str
+    source: bd.backends.proxies.Activity | SimModel|None = None
+    target: bd.backends.proxies.Activity | SimModel|None = None
+    comment: Union[str, dict[str, str], None] = None
+    tags: dict[str, JsonValue] | None = None
+    properties: dict[str, JsonValue] | None = None
+    name: str
+
+class QuantitativeEdge(Edge):
+    """An quantitative edge linking two nodes in the graph."""
+
+    edge_type: QuantitativeEdgeTypes
     amount: Union[pint.Quantity, float,Callable]
+    uncertainty_type: int | None = None
+    loc: float | None = None
+    scale: float | None = None
+    shape: float | None = None
+    minimum: float | None = None
+    maximum: float | None = None
+    negative: bool | None = None
+
+class technosphere_edge(QuantitativeEdge):
+    
+    functional: bool = False
+    edge_type: Literal[QuantitativeEdgeTypes.technosphere] = (
+        QuantitativeEdgeTypes.technosphere
+    )
     model_unit: Union[pint.Unit, str, None] =None
     dataset_unit: Union[pint.Unit, str, None] =None
-    comment: Union[str, dict[str, str], None] = None
-    description: Union[str, dict[str, str], None] = None
     allocationfactor: float= 1.0
-    functional: bool = False
-    type: str 
-    name: str
+    type: technosphereTypes
+
+class biosphere_edge(QuantitativeEdge):
+    
+    edge_type: Literal[QuantitativeEdgeTypes.biosphere] = (
+        QuantitativeEdgeTypes.biosphere
+    )
+    model_unit: Union[pint.Unit, str, None] =None
+    dataset_unit: Union[pint.Unit, str, None] =None
+
 
 class modelInterface(BaseModel):
     '''class for interface external activity models with brightway25'''
@@ -93,8 +135,8 @@ class modelInterface(BaseModel):
     model: SimModel
     name: str
 
-    technosphere: Dict[str, technosphere_flow]={}
-    elementary_flows: Dict[str, technosphere_flow]={}
+    technosphere: Dict[str, technosphere_edge]={}
+    elementary_flows: Dict[str, technosphere_edge]={}
     params: Optional[Dict[str, Union[float, int, bool, str]]]=None
     methods: list=[]
     converged: bool= False
@@ -151,7 +193,7 @@ class modelInterface(BaseModel):
         '''
         Calculate the impact
         '''
-
+        #TODO add biosphere flows
         if not hasattr(self, 'lca'):
             self.calculate_background_impact()
         self.impact_allocated = {}

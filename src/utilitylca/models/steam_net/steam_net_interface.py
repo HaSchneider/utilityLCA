@@ -52,7 +52,7 @@ class steam_net(link.SimModel):
         self.model= Network()
         self.initialized = True
         #return self.calculate_impact(allocate)
-        self.technosphere={}
+        #self.technosphere={}
         #self.set_technosphere()
 
     def calculate_model(self, **params):
@@ -79,8 +79,8 @@ class steam_net(link.SimModel):
                 old_heat=self.params['heat']
                 self.params['heat']=1E9
                 snwm.create_steam_net(self)
-                self.params['heat']=old_heat
-                self.model.get_comp('hex heat sink').set_attr(Q=-self.params['heat'])
+                #self.params['heat']=old_heat
+                #self.model.get_comp('hex heat sink').set_attr(Q=-self.params['heat'])
                 
                 self.model.solve('design')
             if self.model.converged:
@@ -93,45 +93,49 @@ class steam_net(link.SimModel):
         self._result()
 
         self.converged=True
-    def set_technosphere(self):
+    
+    @property
+    def technosphere(self):
         if not self.converged:
             self.calculate_model()
 
-        self.technosphere={
-            'steam generation': link.technosphere_flow(
+        technosphere={
+            'steam generation': link.technosphere_edge(
                 name='steam generation',
                 source= None,
                 target=self,
                 amount= self.ureg.Quantity(self.model.get_conn("e_boil").E.val, 
                                            self.model.get_conn("e_boil").E.unit)*self.ureg.second ,
-                type= 'input'),
-            'electricity grid':link.technosphere_flow(
+                type= link.technosphereTypes.input),
+            'electricity grid':link.technosphere_edge(
                 name='electricity grid',
                 source= None,
                 target=self,
                 amount= self.ureg.Quantity(self.model.get_conn("e_pump").E.val, 
                                            self.model.get_conn("e_pump").E.unit)*self.ureg.second ,
-                type= 'input'),
-            'electricity substitution':link.technosphere_flow(
+                type= link.technosphereTypes.input),
+            'electricity substitution':link.technosphere_edge(
                 name='electricity substitution',
                 source= self,
                 target= None,
                 amount= self.ureg.Quantity(-self.model.get_conn("e_turb_grid").E.val, 
                                            self.model.get_conn("e_turb_grid").E.unit)*self.ureg.second ,
-                type= 'substitution'),
-            'distributed steam':link.technosphere_flow(
+                type= link.technosphereTypes.substitution),
+            'distributed steam':link.technosphere_edge(
                 name='distributed steam',
                 source= self,
                 target = None,
-                amount= self.ureg.Quantity(self.model.get_conn("e_heat_sink").E.val, 
-                                           self.model.get_conn("e_heat_sink").E.unit)*self.ureg.second ,
+                amount= (self.ureg.Quantity(self.model.get_conn("e_heat_sink").E.val, 
+                                           self.model.get_conn("e_heat_sink").E.unit)*self.ureg.second ).to('megajoule'),
                 functional = True,
-                type= 'product',
+                type= link.technosphereTypes.product,
                 allocationfactor=1,
                 model_unit='MJ')
             } 
+        return technosphere
     
-    def set_elementary_flows(self, elementary_flows):
+    @property
+    def elementary_flows(self):
         return {}
 
     def recalculate_model(self, **params):
