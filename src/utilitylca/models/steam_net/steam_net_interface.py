@@ -106,14 +106,16 @@ class steam_net(link.SimModel):
                 target=self,
                 amount= self.ureg.Quantity(self.model.get_conn("e_boil").E.val, 
                                            self.model.get_conn("e_boil").E.unit)*self.ureg.second ,
-                type= link.technosphereTypes.input),
+                type= link.technosphereTypes.input,
+                description= f'Steam generation for high pressure steam of 100 bar in large chemical plants. Without any distribution losses. If distribution losses are assumed in original dataset, correct them in this flow.'),
             'electricity grid':link.technosphere_edge(
                 name='electricity grid',
                 source= None,
                 target=self,
                 amount= self.ureg.Quantity(self.model.get_conn("e_pump").E.val, 
                                            self.model.get_conn("e_pump").E.unit)*self.ureg.second ,
-                type= link.technosphereTypes.input),
+                type= link.technosphereTypes.input,
+                description= 'Electricity from grid, high voltage.'),
             'electricity substitution':link.technosphere_edge(
                 name='electricity substitution',
                 source= self,
@@ -130,13 +132,22 @@ class steam_net(link.SimModel):
                 functional = True,
                 type= link.technosphereTypes.product,
                 allocationfactor=1,
-                model_unit='MJ')
+                model_unit='MJ',
+                description='Distributed steam at condenser. Incl. distribution losses and multifunctionality due to electricity generation in back pressure turbine taken into account.')
             } 
         return technosphere
     
     @property
-    def elementary_flows(self):
-        return {}
+    def biosphere(self):
+        biosphere={'steam leak':link.biosphere_edge(
+            name= 'steam leak',
+            source= self,
+            target= None,
+            amount= (self.ureg.Quantity(self.model.get_conn("c_leak").m.val, 
+                                           self.model.get_conn("c_leak").m.unit)*
+                                           self.ureg.second ).to('tonne').m *self.ureg('m^3'),
+        )}
+        return biosphere
 
     def recalculate_model(self, **params):
         for p in params:
