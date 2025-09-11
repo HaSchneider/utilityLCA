@@ -3,7 +3,7 @@ from tespy.networks import Network
 from tespy.connections import  Ref
 
 #from tespy.components.piping.pipe_group import Pipe_group
-from ... import interface as link
+from simodin import interface as link
 from . import steam_network_model as snwm
 
 from CoolProp.CoolProp import PropsSI
@@ -22,15 +22,15 @@ class steam_net(link.SimModel):
         
         # Steam net properties:
         self.params={
-            'needed_temperature':270,
+            'needed_temperature':230,
             'makeup_factor':0.05,
             'Tamb':20,
             'leakage_factor':0.075,#https://invenoeng.com/steam-system-thermal-cycle-efficiency-a-important-benchmark-in-the-steam-system/
             'mains':[4,8,16,40],
-            'max_pressure':100,
-            'heat':1E6,
-            'wind_velocity':2,
-            'insulation_thickness':0.1,
+            'max_pressure':130,
+            'heat':40E6, # 40 MW
+            'wind_velocity':3,
+            'insulation_thickness':0.1, #https://doi.org/10.1016/j.applthermaleng.2016.03.010
             'environment_media':'air',
             'pipe_length':1000,
         } | params
@@ -93,61 +93,54 @@ class steam_net(link.SimModel):
         self._result()
 
         self.converged=True
+        #self.define_flows()
     
-    @property
-    def technosphere(self):
+    
+    def define_flows(self):
         if not self.converged:
             self.calculate_model()
 
-        technosphere={
+        self.technosphere={
             'steam generation': link.technosphere_edge(
                 name='steam generation',
                 source= None,
                 target=self,
-                amount= self.ureg.Quantity(self.model.get_conn("e_boil").E.val, 
-                                           self.model.get_conn("e_boil").E.unit)*self.ureg.second ,
+                amount= self.model.get_conn("e_boil").E._val*self.model.units.ureg.second ,
                 type= link.technosphereTypes.input,
                 description= f'Steam generation for high pressure steam of 100 bar in large chemical plants. Without any distribution losses. If distribution losses are assumed in original dataset, correct them in this flow.'),
             'electricity grid':link.technosphere_edge(
                 name='electricity grid',
                 source= None,
                 target=self,
-                amount= self.ureg.Quantity(self.model.get_conn("e_pump").E.val, 
-                                           self.model.get_conn("e_pump").E.unit)*self.ureg.second ,
+                amount= self.model.get_conn("e_pump").E._val *self.model.units.ureg.second ,
                 type= link.technosphereTypes.input,
                 description= 'Electricity from grid, high voltage.'),
             'electricity substitution':link.technosphere_edge(
                 name='electricity substitution',
                 source= self,
                 target= None,
-                amount= self.ureg.Quantity(-self.model.get_conn("e_turb_grid").E.val, 
-                                           self.model.get_conn("e_turb_grid").E.unit)*self.ureg.second ,
+                amount= -self.model.get_conn("e_turb_grid").E._val*self.model.units.ureg.second ,
                 type= link.technosphereTypes.substitution),
             'distributed steam':link.technosphere_edge(
                 name='distributed steam',
                 source= self,
                 target = None,
-                amount= (self.ureg.Quantity(self.model.get_conn("e_heat_sink").E.val, 
-                                           self.model.get_conn("e_heat_sink").E.unit)*self.ureg.second ).to('megajoule'),
+                amount= ( self.model.get_conn("e_heat_sink").E._val*self.model.units.ureg.second).to('megajoule'),
                 functional = True,
                 type= link.technosphereTypes.product,
                 allocationfactor=1,
                 model_unit='MJ',
                 description='Distributed steam at condenser. Incl. distribution losses and multifunctionality due to electricity generation in back pressure turbine taken into account.')
-            } 
-        return technosphere
-    
-    @property
-    def biosphere(self):
-        biosphere={'steam leak':link.biosphere_edge(
+            }
+
+        self.biosphere={'steam leak':link.biosphere_edge(
             name= 'steam leak',
             source= self,
             target= None,
-            amount= (self.ureg.Quantity(self.model.get_conn("c_leak").m.val, 
-                                           self.model.get_conn("c_leak").m.unit)*
-                                           self.ureg.second ).to('tonne').m *self.ureg('m^3'),
+            amount= (self.model.get_conn("c_leak").m._val*
+                     self.model.units.ureg.second).to('tonne').m *self.model.units.ureg('m^3'),
         )}
-        return biosphere
+        
 
     def recalculate_model(self, **params):
         for p in params:
@@ -167,10 +160,42 @@ class steam_net(link.SimModel):
         self.converged=True
         self.old_nw = self.model
 
-        return self.technosphere
+        #return self.technosphere
+    def change_parameters(self):
+        # makeup_factor:
+
+        c04 = self.model.get_conn('c04')
+        c022 = self.model.get_conn('c022')
+        muw= self.model.get_conn('muw')
+        
+        muw2=self.model.get_conn('muw2')
+
+        self.model.get_comp('steam pipe').set_attr(
+            Tamb = self.params['Tamb'], 
+            L = self.params['pipe_length'],
+            insulation_thickness= self.params['insulation_thickness'],
+            wind_velocity=self.params['wind_velocity'],
+            )
+        self.model.get_comp('condensate pipe').set_attr(
+            Tamb = self.params['Tamb'], 
+            L = self.params['pipe_length'],
+            insulation_thickness= self.params['insulation_thickness'],
+            wind_velocity=self.params['wind_velocity'],
+            )
+        
+        self.model.get_comp('hex heat sink').set_attr(Q=-self.params['heat'])
+
+        #muw
+        muw.set_attr(m=Ref(c04, self.params['makeup_factor'], 0),)
+        muw2.set_attr(T= self.params['Tamb'])
+
+        #leakage_factor:
+        self.model.get_conn('c_leak').set_attr(m=Ref(c022, self.params['leakage_factor'], 0))
+
+        #needed pressure:
+        self.model.get_conn('c01').set_attr(p = self.needed_pressure)
 
     def _result(self):
-        # TODO check allocation by exergy
         c_leak = self.model.get_conn('c_leak')
         c02 = self.model.get_conn('c02')
         c03 = self.model.get_conn('c03')
@@ -281,35 +306,3 @@ class steam_net(link.SimModel):
         plt.tight_layout()
         return fig
     
-    def change_parameters(self):
-        # makeup_factor:
-
-        c04 = self.model.get_conn('c04')
-        c022 = self.model.get_conn('c022')
-        muw= self.model.get_conn('muw')
-        muw.set_attr(m=Ref(c04, self.params['makeup_factor'], 0))
-        muw2=self.model.get_conn('muw2')
-
-        #Tamb:
-        
-        self.model.get_comp('steam pipe').set_attr(Tamb = self.params['Tamb'], 
-                                                        L = self.params['pipe_length'],
-                                                        insulation_thickness= self.params['insulation_thickness'],
-                                                        wind_velocity=self.params['wind_velocity'])
-        self.model.get_comp('condensate pipe').set_attr(Tamb = self.params['Tamb'], 
-                                                        L = self.params['pipe_length'],
-                                                        insulation_thickness= self.params['insulation_thickness'],
-                                                        wind_velocity=self.params['wind_velocity'])
-        
-        self.model.get_comp('hex heat sink').set_attr(Q=-self.params['heat'])
-
-        
-        #muw.set_attr(T= self.Tamb)
-        #muw2
-        muw2.set_attr(T= self.params['Tamb'])
-
-        #leakage_factor:
-        self.model.get_conn('c_leak').set_attr(m=Ref(c022, self.params['leakage_factor'], 0))
-
-        #needed pressure:
-        self.model.get_conn('c01').set_attr(p = self.needed_pressure)

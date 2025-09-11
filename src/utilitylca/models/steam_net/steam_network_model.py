@@ -17,7 +17,7 @@ def create_steam_net(steam_lca):
 
     #steam_lca.model = Network()
     steam_lca.model.set_attr(iterinfo=False)
-    steam_lca.model.set_attr(T_unit='C', p_unit='bar', h_unit='kJ / kg')
+    steam_lca.model.units.set_defaults(temperature='degC', pressure='bar', enthalpy='kJ / kg')
     # create components
     boiler = SimpleHeatExchanger('steam boiler' , dissipative=False)
     bpt = Turbine('back pressure turbine')
@@ -48,7 +48,7 @@ def create_steam_net(steam_lca):
     injection_source =Source('injection_source')
 
     #create connections:
-    c05 = Connection(cycl, 'out1', boiler, 'in1')
+    c05 = Connection(cycl, 'out1', boiler, 'in1', label='c05')
     c04 = Connection(boiler, 'out1', bpt, 'in1', label='c04')
     c03 = Connection(bpt, 'out1', pipe_warm, 'in1', label='c03')
     c022= Connection(pipe_warm, 'out1', steam_leak, 'in1', label='c022')
@@ -87,7 +87,8 @@ def create_steam_net(steam_lca):
         D='var',  
         ks=4.57e-5,
         power_connector_location="outlet",
-        insulation_thickness=steam_lca.params['insulation_thickness'] ,insulation_tc= 0.035, pipe_thickness=0.004,material='Steel', 
+        insulation_thickness=steam_lca.params['insulation_thickness'] ,
+        insulation_tc= 0.035, pipe_thickness=0.004,material='Steel', 
         wind_velocity=steam_lca.params['wind_velocity'], environment_media = steam_lca.params['environment_media']
             ) 
     c_leak.set_attr(m=Ref(c022, steam_lca.params['leakage_factor'], 0))
@@ -103,7 +104,8 @@ def create_steam_net(steam_lca):
         Tamb = steam_lca.params['Tamb'],#kA= 300,
         L=steam_lca.params['pipe_length'], D='var',  ks=4.57e-5,
         power_connector_location="outlet",
-        insulation_thickness=steam_lca.params['insulation_thickness'] ,insulation_tc= 0.035, 
+        insulation_thickness=steam_lca.params['insulation_thickness'] ,
+        insulation_tc= 0.035, 
         pipe_thickness=0.004,material='Steel', 
         wind_velocity= steam_lca.params['wind_velocity'], environment_media = steam_lca.params['environment_media']
             )
@@ -111,7 +113,7 @@ def create_steam_net(steam_lca):
     c4.set_attr(p0=steam_lca.needed_pressure,m0=steam_lca.params['heat']/2700E3 )
     
     c5.set_attr(p=steam_lca.params['max_pressure'], 
-                h=Ref(c4,1,10),#steam_lca.h_superheating_max_pressure,
+                h0=steam_lca.h_superheating_max_pressure,#h=Ref(c4,1,10),#
                 m0=steam_lca.params['heat']/2700E3 
                 )
 
@@ -127,7 +129,7 @@ def create_steam_net(steam_lca):
                     p0=steam_lca.needed_pressure)
     
     wawa.set_attr(m=Ref(c04, steam_lca.params['makeup_factor'], 0))
-    
+    feed_pump.set_attr(eta_s =0.95)
     # create power connections:
     
     fuel_bus = PowerSource('boiler powersource')
@@ -172,15 +174,15 @@ def create_steam_net(steam_lca):
     steam_lca.model.solve('design')
 
     #2. Run: 
-    feed_pump.set_attr(eta_s =0.95)
-    c5.set_attr(h=None)
-    steam_lca.model.solve('design')
+    #feed_pump.set_attr(eta_s =0.95)
+    #c5.set_attr(h=None)
+    #steam_lca.model.solve('design')
     muw.set_attr(T=None)
     muw.set_attr(T=Ref(c2, 1, -20))
     steam_lca.model.solve('design')
 
     #3. Run: implement condensate injection:
-    print(c022.x.val)
+   
     if c022.x.val in [-1,1] :
         steam_lca.model.del_conns(c01, c1)
         c01= Connection(valve, 'out1', merge_injection, 'in1', label='c01')
@@ -219,10 +221,4 @@ def create_steam_net(steam_lca):
         steam_lca.model.solve('design')
         steam_lca.trap =True
     
-    #ean.analyse(pamb=1, Tamb=20, Chem_Ex= get_chem_ex_lib("Ahrendts"))
-    #steam_lca.ean = ExergyAnalysis(steam_lca.model, 
-    #        E_P=[ turbine_bus, product_bus], 
-    #        E_F=[fuel_bus, pump_bus, makeup_bus, ],
-    #        E_L=[pipe_fugitive_emission, blowdown_bus ]
-    #        )
     steam_lca.old_nw = copy.deepcopy(steam_lca.model)

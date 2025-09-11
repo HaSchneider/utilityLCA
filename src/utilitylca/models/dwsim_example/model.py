@@ -113,7 +113,7 @@ class dwsim_model(link.SimModel):
         return technosphere
     
     @property
-    def elementary_flows(self):
+    def biosphere(self):
         return {}
     
     def recalculate_model(self, **model_params):

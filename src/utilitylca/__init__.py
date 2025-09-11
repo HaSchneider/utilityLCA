@@ -1,5 +1,5 @@
 import sys
-from . import interface
+from simodin import interface
 from .models.steam_net import steam_net_interface, steam_network_model
 if sys.version_info[:2] >= (3, 8):
     # TODO: Import directly (no need for conditional) when `python_requires = >= 3.8`
