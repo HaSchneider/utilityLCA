@@ -2,7 +2,6 @@
 from tespy.networks import Network
 from tespy.connections import  Ref
 
-#from tespy.components.piping.pipe_group import Pipe_group
 from simodin import interface as link
 from . import steam_network_model as snwm
 
@@ -11,12 +10,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 from fluprodia import FluidPropertyDiagram
 
-# [ ] steam in kg 
-# [ ] add function to get impact per main
+
 import copy
 
 class steam_net(link.SimModel):
-    def init_model(self, **params):
+    reference={ 
+        'type': 'misc',
+        'key': '',
+        'author' :'Hannes Schneider',
+        'title'  : 'tba',
+        'license': 'tba',
+        'location':'',
+        'year': '2025',
+        'doi': 'tba',
+        'url': 'https://github.com/HaSchneider'
+        }
+    description='This SiModIn model can be used to calculate the temperature dependent impact of process heat from steam.'
+
+    def init_model(self, init_arg=None, **params):
         self.cond_inj = False
         self.trap=False # droplet seperator if steam is not saturated at point of use (due to losses in pipe)
         
@@ -28,10 +39,11 @@ class steam_net(link.SimModel):
             'leakage_factor':0.075,#https://invenoeng.com/steam-system-thermal-cycle-efficiency-a-important-benchmark-in-the-steam-system/
             'mains':[4,8,16,40],
             'max_pressure':130,
-            'heat':40E6, # 40 MW
+            'heat':40E6, # 40 MW capacity of the pipe
             'wind_velocity':3,
             'insulation_thickness':0.1, #https://doi.org/10.1016/j.applthermaleng.2016.03.010
             'environment_media':'air',
+            'pipe_depth':2,
             'pipe_length':1000,
         } | params
 
@@ -48,12 +60,10 @@ class steam_net(link.SimModel):
 
         self.converged = False
         self._init_mains()
-        self._calc_mains()
+        #self._calc_mains()
         self.model= Network()
         self.initialized = True
-        #return self.calculate_impact(allocate)
-        #self.technosphere={}
-        #self.set_technosphere()
+
 
     def calculate_model(self, **params):
         '''
@@ -62,37 +72,23 @@ class steam_net(link.SimModel):
         makeup_factor: factor of the amount of make up water default= 0.02 
         net_pressure: steam net pressure in bar
         '''
-        for p in params:
-            self.params[p] =params[p]
-        
+
+        self._calc_mains()
         i=0
         while i < 1:
             try:
                 snwm.create_steam_net(self)
-            except:
-                pass
-            if self.model.converged:
-                break
+            except Exception as e:
+                print(e)
             else:
-                #self.model.get_comp('hex heat sink').set_attr(Q=-1E9)
-                #self.model= Network()
-                old_heat=self.params['heat']
-                self.params['heat']=1E9
-                snwm.create_steam_net(self)
-                #self.params['heat']=old_heat
-                #self.model.get_comp('hex heat sink').set_attr(Q=-self.params['heat'])
-                
-                self.model.solve('design')
-            if self.model.converged:
+                self.converged=True
+                self._result()
                 break
 
             i+=1
         else:
-            raise Exception('Steam net calculation failed. Please give it another try!')
-           
-        self._result()
-
-        self.converged=True
+            raise Exception('Steam net calculation failed. Check the parameter and try again!')
+        
         #self.define_flows()
     
     
@@ -105,28 +101,34 @@ class steam_net(link.SimModel):
                 name='steam generation',
                 source= None,
                 target=self,
-                amount= self.model.get_conn("e_boil").E._val*self.model.units.ureg.second ,
+                amount= lambda:self.model.get_conn("e_boil").E._val*self.model.units.ureg.second ,
                 type= link.technosphereTypes.input,
-                description= f'Steam generation for high pressure steam of 100 bar in large chemical plants. Without any distribution losses. If distribution losses are assumed in original dataset, correct them in this flow.'),
+                description= f'Steam generation for high pressure steam of 100 bar in large chemical plants. Without any distribution losses. If distribution losses are assumed in original dataset, correct them in this flow.',
+                default_name='heat production, natural gas, at industrial furnace >100kW'
+                ),
             'electricity grid':link.technosphere_edge(
                 name='electricity grid',
                 source= None,
                 target=self,
-                amount= self.model.get_conn("e_pump").E._val *self.model.units.ureg.second ,
+                amount= lambda:self.model.get_conn("e_pump").E._val *self.model.units.ureg.second ,
                 type= link.technosphereTypes.input,
-                description= 'Electricity from grid, high voltage.'),
+                description= 'Electricity from grid, medium voltage.',
+                default_name= 'market for electricity, medium'
+                ),
             'electricity substitution':link.technosphere_edge(
                 name='electricity substitution',
                 source= self,
                 target= None,
-                amount= -self.model.get_conn("e_turb_grid").E._val*self.model.units.ureg.second ,
-                type= link.technosphereTypes.substitution),
+                amount= lambda:-self.model.get_conn("e_turb_grid").E._val*self.model.units.ureg.second ,
+                type= link.technosphereTypes.substitution,
+                default_name= 'market for electricity, medium'),
             'distributed steam':link.technosphere_edge(
                 name='distributed steam',
                 source= self,
                 target = None,
-                amount= ( self.model.get_conn("e_heat_sink").E._val*self.model.units.ureg.second).to('megajoule'),
+                amount= lambda:(self.model.get_conn("e_heat_sink").E._val*self.model.units.ureg.second).to('megajoule'),
                 functional = True,
+                reference = True,
                 type= link.technosphereTypes.product,
                 allocationfactor=1,
                 model_unit='MJ',
@@ -137,30 +139,31 @@ class steam_net(link.SimModel):
             name= 'steam leak',
             source= self,
             target= None,
-            amount= (self.model.get_conn("c_leak").m._val*
+            amount= lambda:(self.model.get_conn("c_leak").m._val*
                      self.model.units.ureg.second).to('tonne').m *self.model.units.ureg('m^3'),
-        )}
+            default_code= '51254820-3456-4373-b7b4-056cf7b16e01'
+            )}
         
 
     def recalculate_model(self, **params):
-        for p in params:
-            self.params[p] =params[p]
+
         self._calc_mains()
-        self.change_parameters()
-        if not self.converged:
-            self.model = self.old_nw
-        
+        try:
+            self.change_parameters()
+        except Exception as e:
+            raise Exception(e)
+
         self.converged = False
         try:
             self.model.solve('design')
-        except:
-            return np.nan 
+        except Exception as e:
+            raise Exception(e)
         self._result()
         #self.calculate_impact()
         self.converged=True
         self.old_nw = self.model
 
-        #return self.technosphere
+
     def change_parameters(self):
         # makeup_factor:
 
@@ -199,6 +202,7 @@ class steam_net(link.SimModel):
         c_leak = self.model.get_conn('c_leak')
         c02 = self.model.get_conn('c02')
         c03 = self.model.get_conn('c03')
+        c04 = self.model.get_conn('c04')
         cond_5 = self.model.get_conn('cond_5')
         cond_1 = self.model.get_conn('cond_1')
         c01 = self.model.get_conn('c01')
@@ -210,25 +214,28 @@ class steam_net(link.SimModel):
         hex_heat_sink=self.model.get_conn("e_heat_sink")
         turbine_grid = self.model.get_conn('e_turb_grid')
 
-        leakage_loss= c_leak.m.val *(c_leak.h.val - muw2.h.val)
-        pipe_loss = c02.m.val *c03.h.val - c02.m.val * c02.h.val #only steam pipe
-        self.elec_factor= abs(turbine_grid.E.val/hex_heat_sink.E.val)  # *0.9 efficiency of generator
-        self.boiler_factor = abs(boiler.E.val/hex_heat_sink.E.val)
-        self.losses=(pipe_loss+leakage_loss)/abs(hex_heat_sink.E.val)*1000 #boiler.Q.val+heat_sink.Q.val+bpt.P.val # 
-        self.watertreatment_factor = abs(muw.m.val/hex_heat_sink.E.val)
+        leakage_loss= c_leak.m._val *(c_leak.h._val - muw2.h._val)
+        pipe_loss = c02.m._val *c03.h._val - c02.m._val * c02.h._val #only steam pipe
+        self.elec_factor= abs(turbine_grid.E._val/hex_heat_sink.E._val).m  
+        self.boiler_factor = abs(boiler.E._val/hex_heat_sink.E._val).m
+        self.losses=((pipe_loss+leakage_loss)/abs(hex_heat_sink.E._val)).m
+        self.watertreatment_factor = abs(muw.m._val/hex_heat_sink.E._val).m
         #calc exergy reduction:
-        
-        self.E_bpt= turbine_grid.E.val#((c04.h.val*1000 -c03.h.val*1000) - self.params['Tamb']* (c03.s.val - c04.s.val) )* c03.m.val
+        t_amb= self.model.units.ureg.Quantity(self.params['Tamb'],'degC').to('kelvin')
+        self.E_bpt=((c03.h._val -c04.h._val) 
+                    - t_amb * (c03.s._val - c04.s._val))* c03.m._val
+
         if self.cond_inj:
-            self.E_hs= ((cond_5.h.val*1000 -cond_1.h.val*1000) - (self.params['Tamb']+273)* (cond_5.s.val - cond_1.s.val))* cond_5.m.val
+            self.E_hs= ((cond_1.h._val -cond_5.h._val) 
+                        - t_amb * (cond_1.s._val - cond_5.s._val))* cond_5.m._val
         else:
-            self.E_hs= ((c01.h.val*1000 -c1.h.val*1000) - (self.params['Tamb']+273)* (c01.s.val - c1.s.val))* c01.m.val
+            self.E_hs= ((c1.h._val -c01.h._val) 
+                        - t_amb * (c1.s._val - c01.s._val))* c01.m._val
         
-        self.alloc_ex = self.E_hs /(self.E_hs + self.E_bpt)
+        self.alloc_ex = (self.E_hs /(self.E_hs + self.E_bpt)).m
 
     def _calc_pressure(self):
         self.needed_pressure= PropsSI('P','Q',0,'T',self.params['needed_temperature']+273,'IF97::water')*1E-5
-        #needed_enthalpy= PropsSI('H','Q',0,'T',self.params['needed_temperature']+273,'IF97::water')
         
     def _init_mains(self):
         self.params['mains'].sort()
@@ -246,14 +253,12 @@ class steam_net(link.SimModel):
         if self.needed_pressure*1.05 > self.params['mains'][-1]:
             print('needed pressure larger than net pressure!')
         self.main_pressure = min((x for x in self.params['mains'] if x >= self.needed_pressure*1.01), default=None) 
-        #print(f'self.main_pressure: {self.main_pressure}', f'self.needed_pressure: {self.needed_pressure}')
-        #self.main_dict={}
+
         for pres in self.params['mains']:
-            #self.main_dict[str(pres)] = {}
             self.main_dict[str(pres)]['pressure'] = pres
             self.main_dict[str(pres)]['temperature'] =PropsSI('T', 'P', pres*1E5, 'Q', 1, 'IF97::water') - 273.15 # in °C
 
-    def plot_hs(self):
+    def plot_Ts(self):
         # Initial Setup
         diagram = FluidPropertyDiagram('water')
         diagram.set_unit_system(T='°C', p='bar', h='kJ/kg')
