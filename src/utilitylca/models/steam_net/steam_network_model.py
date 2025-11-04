@@ -80,7 +80,7 @@ def create_steam_net(steam_lca):
     c03.set_attr(p=steam_lca.main_pressure, 
                  h0=steam_lca.h_superheating_max_pressure, 
                  )
-    pipe_warm.set_attr(pr=0.98, 
+    pipe_warm.set_attr(pr=0.95, 
         Tamb = steam_lca.params['Tamb'], 
         L=steam_lca.params['pipe_length'], 
         D='var',  
@@ -170,7 +170,7 @@ def create_steam_net(steam_lca):
 
     #3. Run: implement condensate injection:
    
-    if c022.x.val in [-1,1] :
+    if c022.x.val in [-1,1] and steam_lca.desuperheat_steam:
         steam_lca.model.del_conns(c01, c1)
         c01= Connection(valve, 'out1', merge_injection, 'in1', label='c01')
         cond_3 = Connection(injection_source, 'out1', merge_injection, 'in2')

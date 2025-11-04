@@ -32,7 +32,7 @@ class steam_net(link.SimModel):
         self.trap=False # droplet seperator if steam is not saturated at point of use (due to losses in pipe)
         
         # Steam net properties:
-        self.params={
+        default_params={
             'needed_temperature':230,
             'makeup_factor':0.05,
             'Tamb':20,
@@ -45,8 +45,10 @@ class steam_net(link.SimModel):
             'environment_media':'air',
             'pipe_depth':2,
             'pipe_length':1000,
-        } | params
+        } 
+        self.desuperheat_steam=False
 
+        self.params= default_params | self.params | params
         self.main_pressure = 0
         self.h_superheating_max_pressure = 0
         
@@ -200,13 +202,14 @@ class steam_net(link.SimModel):
 
     def _result(self):
         c_leak = self.model.get_conn('c_leak')
-        c02 = self.model.get_conn('c02')
+        c022 = self.model.get_conn('c022')
         c03 = self.model.get_conn('c03')
         c04 = self.model.get_conn('c04')
         cond_5 = self.model.get_conn('cond_5')
         cond_1 = self.model.get_conn('cond_1')
         c01 = self.model.get_conn('c01')
         c1 = self.model.get_conn('c1')
+        c2 = self.model.get_conn('c2')
         muw= self.model.get_conn('muw')
         muw2=self.model.get_conn('muw2')
         
@@ -215,10 +218,12 @@ class steam_net(link.SimModel):
         turbine_grid = self.model.get_conn('e_turb_grid')
 
         leakage_loss= c_leak.m._val *(c_leak.h._val - muw2.h._val)
-        pipe_loss = c02.m._val *c03.h._val - c02.m._val * c02.h._val #only steam pipe
-        self.elec_factor= abs(turbine_grid.E._val/hex_heat_sink.E._val).m  
-        self.boiler_factor = abs(boiler.E._val/hex_heat_sink.E._val).m
-        self.losses=((pipe_loss+leakage_loss)/abs(hex_heat_sink.E._val)).m
+        pipe_loss = (abs(c022.m._val *c03.h._val - c022.m._val * c022.h._val )
+                    + abs(c1.m._val * c1.h._val - c2.m._val * c2.h._val)
+        )
+        self.elec_factor= abs((turbine_grid.E._val/hex_heat_sink.E._val).to_base_units().m )
+        self.boiler_factor = abs((boiler.E._val/hex_heat_sink.E._val).to_base_units().m)
+        self.losses=((abs(pipe_loss)+abs(leakage_loss))/abs(hex_heat_sink.E._val)).to_base_units().m
         self.watertreatment_factor = abs(muw.m._val/hex_heat_sink.E._val).m
         #calc exergy reduction:
         t_amb= self.model.units.ureg.Quantity(self.params['Tamb'],'degC').to('kelvin')
