@@ -2,7 +2,7 @@
 utilityLCA
 ==========
 
-UtilityLCA contains a TESPy network wrapped in a SiModIn model for simulating the impact of steam as process heating medium in chemical industry.
+UtilityLCA contains a [TESPy](https://tespy.readthedocs.io/en/main/) network wrapped in a SiModIn model for simulating the impact of steam as process heating medium in chemical industry.
 
 ![steam_net_simple](https://github.com/user-attachments/assets/cef40158-f670-4289-9305-86b878ee8cf4)
 
