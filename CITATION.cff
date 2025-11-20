@@ -10,4 +10,8 @@ authors:
     email: hannes.schneider@tu-braunschweig.de
     affiliation: TU Braunschweig - ICTV
     orcid: 'https://orcid.org/0009-0004-7901-2676'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.17659093
 repository-code: 'https://github.com/HaSchneider/utilityLCA'
+license: GPL-3.0
