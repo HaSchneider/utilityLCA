@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+title: utilityLCA
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: 'Hannes '
+    family-names: Schneider
+    email: hannes.schneider@tu-braunschweig.de
+    affiliation: TU Braunschweig - ICTV
+    orcid: 'https://orcid.org/0009-0004-7901-2676'
+repository-code: 'https://github.com/HaSchneider/utilityLCA'
