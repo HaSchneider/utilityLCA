@@ -169,8 +169,8 @@ class steam_net(link.SimModel):
     def change_parameters(self):
         # makeup_factor:
 
-        c04 = self.model.get_conn('c04')
-        c022 = self.model.get_conn('c022')
+        c1_6 = self.model.get_conn('c1_6')
+        c1_4 = self.model.get_conn('c1_4')
         muw= self.model.get_conn('muw')
         
         muw2=self.model.get_conn('muw2')
@@ -191,25 +191,25 @@ class steam_net(link.SimModel):
         self.model.get_comp('hex heat sink').set_attr(Q=-self.params['heat'])
 
         #muw
-        muw.set_attr(m=Ref(c04, self.params['makeup_factor'], 0),)
+        muw.set_attr(m=Ref(c1_6, self.params['makeup_factor'], 0),)
         muw2.set_attr(T= self.params['Tamb'])
 
         #leakage_factor:
-        self.model.get_conn('c_leak').set_attr(m=Ref(c022, self.params['leakage_factor'], 0))
+        self.model.get_conn('c_leak').set_attr(m=Ref(c1_4, self.params['leakage_factor'], 0))
 
         #needed pressure:
-        self.model.get_conn('c01').set_attr(p = self.needed_pressure)
+        self.model.get_conn('c1_1').set_attr(p = self.needed_pressure)
 
     def _result(self):
         c_leak = self.model.get_conn('c_leak')
-        c022 = self.model.get_conn('c022')
-        c03 = self.model.get_conn('c03')
-        c04 = self.model.get_conn('c04')
+        c1_4 = self.model.get_conn('c1_4')
+        c1_5 = self.model.get_conn('c1_5')
+        c1_6 = self.model.get_conn('c1_6')
         cond_5 = self.model.get_conn('cond_5')
         cond_1 = self.model.get_conn('cond_1')
-        c01 = self.model.get_conn('c01')
-        c1 = self.model.get_conn('c1')
-        c2 = self.model.get_conn('c2')
+        c1_1 = self.model.get_conn('c1_1')
+        c0_2 = self.model.get_conn('c0_1')
+        c0_3 = self.model.get_conn('c0_3')
         muw= self.model.get_conn('muw')
         muw2=self.model.get_conn('muw2')
         
@@ -227,17 +227,19 @@ class steam_net(link.SimModel):
         self.watertreatment_factor = abs(muw.m._val/hex_heat_sink.E._val).m
         #calc exergy reduction:
         t_amb= self.model.units.ureg.Quantity(self.params['Tamb'],'degC').to('kelvin')
-        self.E_bpt=((c03.h._val -c04.h._val) 
-                    - t_amb * (c03.s._val - c04.s._val))* c03.m._val
+        self.E_bpt=((c1_5.h._val -c1_6.h._val) 
+                    - t_amb * (c1_5.s._val - c1_6.s._val))* c1_5.m._val
 
         if self.cond_inj:
             self.E_hs= ((cond_1.h._val -cond_5.h._val) 
                         - t_amb * (cond_1.s._val - cond_5.s._val))* cond_5.m._val
         else:
-            self.E_hs= ((c1.h._val -c01.h._val) 
-                        - t_amb * (c1.s._val - c01.s._val))* c01.m._val
+            self.E_hs= ((c0_2.h._val -c1_1.h._val) 
+                        - t_amb * (c0_2.s._val - c1_1.s._val))* c1_1.m._val
+        self.E_nw_hs= ((self.model.get_conn('cnw2').h._val -self.model.get_conn('cnw1').h._val) 
+                        - t_amb * (self.model.get_conn('cnw2').s._val - self.model.get_conn('cnw1').s._val))* self.model.get_conn('cnw1').m._val
         
-        self.alloc_ex = (self.E_hs /(self.E_hs + self.E_bpt)).m
+        self.alloc_ex = (self.E_bpt /(self.E_hs + self.E_bpt + self.E_nw_hs)).m
 
     def _calc_pressure(self):
         self.needed_pressure= PropsSI('P','Q',0,'T',self.params['needed_temperature']+273,'IF97::water')*1E-5

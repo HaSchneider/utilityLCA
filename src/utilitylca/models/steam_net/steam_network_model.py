@@ -48,55 +48,68 @@ def create_steam_net(steam_lca):
     injection_source =Source('injection_source')
 
     #create connections:
-    c05 = Connection(cycl, 'out1', boiler, 'in1', label='c05')
-    c04 = Connection(boiler, 'out1', bpt, 'in1', label='c04')
-    c03 = Connection(bpt, 'out1', pipe_warm, 'in1', label='c03')
-    c022= Connection(pipe_warm, 'out1', steam_leak, 'in1', label='c022')
-    c02 = Connection(steam_leak, 'out1', valve, 'in1',label='c02')
+    c0_7 = Connection(cycl, 'out1', boiler, 'in1', label='c0_7') #c05
+    c1_6 = Connection(boiler, 'out1', bpt, 'in1', label='c1_6') #c04
+    c1_5 = Connection(bpt, 'out1', pipe_warm, 'in1', label='c1_5') #c03
+    c1_4= Connection(pipe_warm, 'out1', steam_leak, 'in1', label='c1_4') #c022
+    c1_3 = Connection(steam_leak, 'out1', diversion, 'in1',label='c1_3') #c023
+
+    cnw1= Connection(diversion, 'out1', network_heat_sink, 'in1',label='cnw1')
+    cnw2= Connection(network_heat_sink, 'out1', valve_cond_nw, 'in1',label='cnw2')
+    cnw3= Connection(valve_cond_nw, 'out1', conflation, 'in1',label='cnw3')
 
     c_leak = Connection(steam_leak, 'out2', steam_losses, 'in1', label='c_leak')
     muw2 = Connection(makeup_leak, 'out1', merge, 'in3', label='muw2')
 
-    c01= Connection(valve, 'out1', hex_heat_sink, 'in1', label='c01')
-    c1 = Connection(hex_heat_sink, 'out1', pipe_cold, 'in1', label='c1')
-    c2 = Connection(pipe_cold, 'out1', split, 'in1', label='c2')
-    c3 = Connection(split, 'out1', merge, 'in1', label='c3')
-    c4 = Connection(merge, 'out1', feed_pump, 'in1', label='c4')
-    c5 = Connection(feed_pump, 'out1', cycl, 'in1', label='c5')
+    c1_2 = Connection(diversion, 'out2', valve, 'in1',label='c1_2') #c02
+    c1_1= Connection(valve, 'out1', hex_heat_sink, 'in1', label='c1_1') #c01
+    
+    c0_1 = Connection(hex_heat_sink, 'out1', valve_cond, 'in1', label='c0_1') #c1
+    c0_11 = Connection(valve_cond, 'out1', conflation, 'in2', label='c0_11') #c1
+    c0_2 = Connection(conflation, 'out1', pipe_cold, 'in1', label='c0_2') #c11
+
+    c0_3 = Connection(pipe_cold, 'out1', split, 'in1', label='c0_3') #c2
+    c0_4 = Connection(split, 'out1', merge, 'in1', label='c0_4') #c3
+    c0_5 = Connection(merge, 'out1', feed_pump, 'in1', label='c0_5') #c4
+    c0_6 = Connection(feed_pump, 'out1', cycl, 'in1', label='c0_6') #c5
 
     muw = Connection(makeup, 'out1', merge, 'in2', label='muw')
     wawa = Connection(split, 'out2', blowdown, 'in1', 'c_blowdown')
 
-    steam_lca.model.add_conns(c05, c04, c03, c022, c02, c01, 
-                c_leak, 
-                c1, c2, c3, c4, c5, 
-                muw, wawa, muw2)
+    steam_lca.model.add_conns(c1_6, c1_5, c1_4, c1_3, c1_2, c1_1, 
+                              cnw1, cnw2,cnw3,
+                              c_leak,
+                              c0_11,
+                              c0_1, c0_2, c0_3, c0_4, c0_5, c0_6, c0_7,
+                              muw, wawa, muw2)
     #set attributes:
     boiler.set_attr(pr = 1, power_connector_location="inlet")
-    c04.set_attr(fluid={"H2O": 1}, 
+    c1_6.set_attr(fluid={"H2O": 1}, 
                     h= steam_lca.h_superheating_max_pressure)
-    c05.set_attr(p0=steam_lca.main_pressure,)
+    c0_7.set_attr(p0=steam_lca.main_pressure,)
     bpt.set_attr(eta_s = 0.85, )
-    c03.set_attr(p=steam_lca.main_pressure, 
+    c1_5.set_attr(p=steam_lca.main_pressure, 
                  h0=steam_lca.h_superheating_max_pressure, 
                  )
     pipe_warm.set_attr(pr=0.95, 
         Tamb = steam_lca.params['Tamb'], 
         L=steam_lca.params['pipe_length'], 
-        D='var',  
-        ks=4.57e-5,
+        D='var', ks=4.57e-5,
         power_connector_location="outlet",
         insulation_thickness=steam_lca.params['insulation_thickness'] ,
         insulation_tc= 0.035, pipe_thickness=0.004,material='Steel', 
-        wind_velocity=steam_lca.params['wind_velocity'], environment_media = steam_lca.params['environment_media']
+        wind_velocity=steam_lca.params['wind_velocity'], 
+        environment_media = steam_lca.params['environment_media']
             ) 
-    c_leak.set_attr(m=Ref(c022, steam_lca.params['leakage_factor'], 0))
-    c01.set_attr(p = steam_lca.needed_pressure,
+    c_leak.set_attr(m=Ref(c1_4, steam_lca.params['leakage_factor'], 0))
+    c1_1.set_attr(p = steam_lca.needed_pressure,
                  h0=steam_lca.h_superheating_max_pressure,
                  )
-    hex_heat_sink.set_attr(pr=1,Q=-steam_lca.params['heat'], power_connector_location="outlet")
-    c1.set_attr(x=0,
-                p0=steam_lca.needed_pressure,
+    hex_heat_sink.set_attr(pr=1,
+                           Q=-steam_lca.params['heat'], 
+                           power_connector_location="outlet")
+    c0_2.set_attr(#x=0,
+                p=1.513, #0.5 bar to atmospheric pressure 
                 )
     pipe_cold.set_attr(pr=0.95, 
         Tamb = steam_lca.params['Tamb'],
@@ -105,26 +118,27 @@ def create_steam_net(steam_lca):
         insulation_thickness=steam_lca.params['insulation_thickness'] ,
         insulation_tc= 0.035, 
         pipe_thickness=0.004,material='Steel', 
-        wind_velocity= steam_lca.params['wind_velocity'], environment_media = steam_lca.params['environment_media']
+        wind_velocity= steam_lca.params['wind_velocity'], 
+        environment_media = steam_lca.params['environment_media']
             )
 
-    c4.set_attr(p0=steam_lca.needed_pressure,
+    c0_5.set_attr(p0=steam_lca.needed_pressure,
                 )
     
-    c5.set_attr(p=steam_lca.params['max_pressure'], 
+    c0_6.set_attr(p=steam_lca.params['max_pressure'], 
                 h0=steam_lca.h_superheating_max_pressure,
                 )
 
-    muw.set_attr(m=Ref(c04, steam_lca.params['makeup_factor'], 0), 
+    muw.set_attr(m=Ref(c1_6, steam_lca.params['makeup_factor'], 0), 
                     T=steam_lca.params['Tamb'],
                     fluid={"H2O": 1},  
-                    p0=steam_lca.needed_pressure)
+                    p0=1.013)
     muw2.set_attr(m=Ref(c_leak, 1, 0), 
                     T=steam_lca.params['Tamb'],
                     fluid={"H2O": 1}, 
-                    p0=steam_lca.needed_pressure)
+                    p0=1.013)
     
-    wawa.set_attr(m=Ref(c04, steam_lca.params['makeup_factor'], 0))
+    wawa.set_attr(m=Ref(c1_6, steam_lca.params['makeup_factor'], 0))
     feed_pump.set_attr(eta_s =0.95)
     # create power connections:
     
@@ -164,7 +178,7 @@ def create_steam_net(steam_lca):
     #2. Run: 
 
     muw.set_attr(T=None)
-    muw.set_attr(T=Ref(c2, 1, -20))
+    muw.set_attr(T=Ref(c0_3, 1, -20))
     logger.info('Start second solve')
     steam_lca.model.solve('design')
 
