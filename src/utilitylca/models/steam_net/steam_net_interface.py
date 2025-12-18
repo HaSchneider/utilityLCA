@@ -25,7 +25,11 @@ class steam_net(link.SimModel):
         'doi': 'tba',
         'url': 'https://github.com/HaSchneider'
         }
-    description='This SiModIn model can be used to calculate the temperature dependent impact of process heat from steam.'
+    description='This SiModIn model can be used to calculate the temperature dependent impact of process heat from steam. ' \
+    'The model generates two products, the desdired steam at defined condensing temperature and the network steam. ' \
+    'This is needed to have a fixed pipe heat capacity.' \
+    'The model considers physical, dissipative and pressure losses in the steam network.' \
+    '' \
 
     def init_model(self, init_arg=None, **params):
         self.cond_inj = False
@@ -39,7 +43,8 @@ class steam_net(link.SimModel):
             'leakage_factor':0.075,#https://invenoeng.com/steam-system-thermal-cycle-efficiency-a-important-benchmark-in-the-steam-system/
             'mains':[4,8,16,40],
             'max_pressure':130,
-            'heat':40E6, # 40 MW capacity of the pipe
+            'heat_capacity_pipe_network': 20E6, #20 MW capacity of the pipe
+            'heat':1E6, # condensation heat at heat exchanger 
             'wind_velocity':3,
             'insulation_thickness':0.1, #https://doi.org/10.1016/j.applthermaleng.2016.03.010
             'environment_media':'air',
@@ -132,9 +137,24 @@ class steam_net(link.SimModel):
                 functional = True,
                 reference = True,
                 type= link.technosphereTypes.product,
-                allocationfactor=1,
+                allocationfactor=lambda:((self.model.get_comp('hex heat sink').Q._val/
+                                  (self.model.get_comp('network condensation').Q._val +self.model.get_comp('hex heat sink').Q._val)).m),
                 model_unit='MJ',
-                description='Distributed steam at condenser. Incl. distribution losses and multifunctionality due to electricity generation in back pressure turbine taken into account.')
+                description='Distributed steam at condenser. Incl. distribution losses and multifunctionality ' \
+                'due to electricity generation in back pressure turbine taken into account.'),
+            'network steam':link.technosphere_edge(
+                name='network steam',
+                source= self,
+                target = None,
+                amount= lambda:(self.model.get_conn("e_nw_heat_sink").E._val*self.model.units.ureg.second).to('megajoule'),
+                functional = True,
+                reference = False,
+                type= link.technosphereTypes.product,
+                allocationfactor=lambda:((self.model.get_comp('network condensation').Q._val/
+                                  (self.model.get_comp('network condensation').Q._val +self.model.get_comp('hex heat sink').Q._val)).m),
+                model_unit='MJ',
+                description='Distributed steam at network.')
+            
             }
 
         self.biosphere={'steam leak':link.biosphere_edge(

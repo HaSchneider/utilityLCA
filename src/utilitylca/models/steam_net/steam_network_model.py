@@ -142,6 +142,13 @@ def create_steam_net(steam_lca):
     
     wawa.set_attr(m=Ref(c1_6, steam_lca.params['makeup_factor'], 0))
     feed_pump.set_attr(eta_s =0.95)
+
+    network_heat_sink.set_attr(pr=1, 
+                               Q=-(steam_lca.params['heat_capacity_pipe_network']-steam_lca.params['heat']),
+                               power_connector_location="outlet",
+                               )
+    cnw3.set_attr(x=0)
+    c0_11.set_attr(x=0)
     # create power connections:
     
     fuel_bus = PowerSource('boiler powersource')
@@ -164,6 +171,9 @@ def create_steam_net(steam_lca):
     heat_sink =PowerSink('heat sink')
     e_heat_sink =PowerConnection( hex_heat_sink,'heat',heat_sink, 'power', label='e_heat_sink')
 
+    nw_heat_sink =PowerSink('nw heat sink')
+    e_nw_heat_sink =PowerConnection( network_heat_sink,'heat',nw_heat_sink, 'power', label='e_nw_heat_sink')
+
     pump_psource = PowerSource('feedpump powersource')
     e_pump = PowerConnection(pump_psource, 'power', feed_pump, 'power', label='e_pump')
 
@@ -171,7 +181,7 @@ def create_steam_net(steam_lca):
     steam_lca.model.add_conns(e_boil,
         e_turb,e_turb_grid,
                            e_pi_c, e_pi_h, e_pi_sink,
-                           e_heat_sink, 
+                           e_heat_sink, e_nw_heat_sink,
                            e_pump
     )
     logger.info('Start first solve')
