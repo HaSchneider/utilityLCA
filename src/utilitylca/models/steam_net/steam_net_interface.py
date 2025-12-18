@@ -245,15 +245,27 @@ class steam_net(link.SimModel):
         
         boiler=self.model.get_conn("e_boil")
         hex_heat_sink=self.model.get_conn("e_heat_sink")
+        net_heat_sink=self.model.get_conn("e_nw_heat_sink")
         turbine_grid = self.model.get_conn('e_turb_grid')
 
         leakage_loss= c_leak.m._val *(c_leak.h._val - muw2.h._val)
-        pipe_loss = (abs(c022.m._val *c03.h._val - c022.m._val * c022.h._val )
-                    + abs(c1.m._val * c1.h._val - c2.m._val * c2.h._val)
-        )
+        pipe_loss = self.model.get_conn('e_pi_sink').E._val
+        #(abs(c1_4.m._val *c1_5.h._val - c1_4.m._val * c1_4.h._val )
+        #            + abs(c0_2.m._val * c0_2.h._val - c0_3.m._val * c0_3.h._val)
+        #)
         self.elec_factor= abs((turbine_grid.E._val/hex_heat_sink.E._val).to_base_units().m )
         self.boiler_factor = abs((boiler.E._val/hex_heat_sink.E._val).to_base_units().m)
-        self.losses=((abs(pipe_loss)+abs(leakage_loss))/abs(hex_heat_sink.E._val)).to_base_units().m
+        #self.losses=((abs(pipe_loss)+abs(leakage_loss))/
+        #             (abs(boiler.E._val)-abs(self.model.get_conn('e_turb').E._val)+self.model.get_conn('e_pump').E._val)
+        #             ).to_base_units().m
+        
+        self.losses=1-(
+            (self.model.get_conn('e_heat_sink').E._val + 
+             self.model.get_conn('e_nw_heat_sink').E._val
+             )/
+            (self.model.get_conn('e_boil').E._val- self.model.get_conn('e_turb').E._val +self.model.get_conn('e_pump').E._val) 
+            )
+        
         self.watertreatment_factor = abs(muw.m._val/hex_heat_sink.E._val).m
         #calc exergy reduction:
         t_amb= self.model.units.ureg.Quantity(self.params['Tamb'],'degC').to('kelvin')
