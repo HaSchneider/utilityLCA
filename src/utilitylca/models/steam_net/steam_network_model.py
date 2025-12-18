@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 
 def create_steam_net(steam_lca):
     
-    logging.basicConfig(filename='logs.log', level=logging.INFO)
+    logging.basicConfig(filename='logs.log', 
+                        filemode="w",
+                        level=logging.INFO)
     steam_lca.cond_inj = False
     steam_lca.trap=False
     steam_lca.converged =False
@@ -24,7 +26,7 @@ def create_steam_net(steam_lca):
     boiler = SimpleHeatExchanger('steam boiler' , dissipative=False)
     bpt = Turbine('back pressure turbine')
     pipe_warm =  Pipe('steam pipe', dissipative=True)
-    cond_trap= DropletSeparator('condensate trap')
+    
     valve = Valve('controlvalve')
     hex_heat_sink = SimpleHeatExchanger('hex heat sink', dissipative=False)
     pipe_cold= Pipe('condensate pipe',dissipative=True)
@@ -34,18 +36,18 @@ def create_steam_net(steam_lca):
     steam_losses = Sink('steam losses')
     steam_leak= Splitter("steam leak")
     makeup_leak =Source('leak makeup')
-    makeup_trap =Source('trap makeup')
+    
     makeup=Source("Make-up water")
     blowdown= Sink("blowdown wastewater")
     cond_waste= Sink("pipe condensate wastewater")
     merge = Merge("Makeup water feed", num_in=3)
-    merge_injection = Merge("Injection")
+    
     split= Splitter("remove wastewater")
-
-    condensate_split= Splitter("split condensate")
-
-    dummy_sink2= Sink('dummy sink2')
-    injection_source =Source('injection_source')
+    diversion= Splitter("divert steam from network")
+    conflation= Merge("conflation condensate to network")
+    network_heat_sink = SimpleHeatExchanger('network condensation', dissipative=False)
+    valve_cond_nw = Valve('relax_cond_network')
+    valve_cond = Valve('relax_cond')
 
     #create connections:
     c0_7 = Connection(cycl, 'out1', boiler, 'in1', label='c0_7') #c05
@@ -183,21 +185,26 @@ def create_steam_net(steam_lca):
     steam_lca.model.solve('design')
 
     #3. Run: implement condensate injection:
-   
-    if c022.x.val in [-1,1] and steam_lca.desuperheat_steam:
-        steam_lca.model.del_conns(c01, c1)
-        c01= Connection(valve, 'out1', merge_injection, 'in1', label='c01')
+   # if superheated inject condensate:
+    if c1_4.x.val in [-1,1] and steam_lca.desuperheat_steam:
+        steam_lca.model.del_conns(c1_1, c0_1)
+        merge_injection = Merge("Injection")
+        dummy_sink2= Sink('dummy sink2')
+        injection_source =Source('injection_source')
+        condensate_split= Splitter("split condensate")
+        
+        c1_1= Connection(valve, 'out1', merge_injection, 'in1', label='c1_1')
         cond_3 = Connection(injection_source, 'out1', merge_injection, 'in2')
         cond_5 = Connection(merge_injection, 'out1', hex_heat_sink, 'in1', label= 'cond_5')
 
         cond_1 = Connection(hex_heat_sink, 'out1', condensate_split, 'in1', label='cond_1')
         cond_2 = Connection(condensate_split, 'out2', dummy_sink2, 'in1')
-        c1 = Connection(condensate_split, 'out1', pipe_cold, 'in1', label='c1')
-        steam_lca.model.add_conns(cond_1, cond_2, cond_3,cond_5,c01,c1)
+        c0_1 = Connection(condensate_split, 'out1', valve_cond, 'in1', label='c0_1')
+        steam_lca.model.add_conns(cond_1, cond_2, cond_3,cond_5,c1_1,c0_1)
 
-        c01.set_attr(p = steam_lca.needed_pressure)
+        c1_1.set_attr(p = steam_lca.needed_pressure)
         cond_1.set_attr(x=0)
-        c1.set_attr(m=Ref(c01,1,0))
+        c0_1.set_attr(m=Ref(c1_1,1,0))
         cond_3.set_attr(x=0, 
                         fluid={"H2O": 1}, 
                         )
@@ -205,10 +212,13 @@ def create_steam_net(steam_lca):
         logger.info('Start third solve')
         steam_lca.model.solve('design')
         steam_lca.cond_inj =True
-    
-    elif 0< c022.x.val <1:
+    # when steam is not saturated trap condensate (experimental): 
+    elif 0< c1_4.x.val <1:
         merge.set_attr(num_in=4)
-        steam_lca.model.del_conns(c02)
+        steam_lca.model.del_conns(c1_2)
+        makeup_trap =Source('trap makeup')
+        cond_trap= DropletSeparator('condensate trap') 
+
         muw3 = Connection(makeup_trap, 'out1', merge, 'in4', label='muw3')
         c023= Connection(steam_leak, 'out1', cond_trap, 'in1')
         c024= Connection(cond_trap, 'out2', valve, 'in1')
