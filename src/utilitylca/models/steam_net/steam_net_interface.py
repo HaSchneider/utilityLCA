@@ -70,8 +70,18 @@ class steam_net(link.SimModel):
         #self._calc_mains()
         self.model= Network()
         self.initialized = True
-
-
+    def _validate_params(self):
+        if self.params['needed_temperature'] <100:
+            raise ValueError('needed temperature must be larger than 100 °C')
+        if self.params['makeup_factor'] <0 or self.params['makeup_factor'] >1:
+            raise ValueError('makeup factor must be between 0 and 1')
+        if self.params['leakage_factor'] <0 or self.params['leakage_factor'] >1:
+            raise ValueError('leakage factor must be between 0 and 1')
+        if self.params['max_pressure'] < self.params['mains'][-1]:
+            raise ValueError('max pressure must be larger than the highest main pressure')
+        if self.params['heat_capacity_pipe_network'] <self.params['heat']:
+            raise ValueError('Heat capacity of the pipe network must be larger than the transferred heat at the heat exchanger')
+        
     def calculate_model(self, **params):
         '''
         needed_pressure: steam pressure in bar
@@ -79,14 +89,14 @@ class steam_net(link.SimModel):
         makeup_factor: factor of the amount of make up water default= 0.02 
         net_pressure: steam net pressure in bar
         '''
-
+        self._validate_params()
         self._calc_mains()
         i=0
         while i < 1:
             try:
                 snwm.create_steam_net(self)
             except Exception as e:
-                print(e)
+                raise Exception(f'Calculation failed: {e}')
             else:
                 self.converged=True
                 self._result()
