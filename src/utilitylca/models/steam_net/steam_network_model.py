@@ -31,6 +31,7 @@ def create_steam_net(steam_lca):
     hex_heat_sink = SimpleHeatExchanger('hex heat sink', dissipative=False)
     pipe_cold= Pipe('condensate pipe',dissipative=True)
     feed_pump= Pump('feedpump')
+    condensate_pump= Pump('condensate pump')
     cycl=CycleCloser('CycleCloser')
     
     steam_losses = Sink('steam losses')
@@ -66,8 +67,8 @@ def create_steam_net(steam_lca):
     c1_2 = Connection(diversion, 'out2', valve, 'in1',label='c1_2') #c02
     c1_1= Connection(valve, 'out1', hex_heat_sink, 'in1', label='c1_1') #c01
     
-    c0_1 = Connection(hex_heat_sink, 'out1', valve_cond, 'in1', label='c0_1') #c1
-    c0_11 = Connection(valve_cond, 'out1', conflation, 'in2', label='c0_11') #c1
+    c0_1 = Connection(hex_heat_sink, 'out1', condensate_pump, 'in1', label='c0_1') #c1
+    c0_11 = Connection(condensate_pump, 'out1', conflation, 'in2', label='c0_11') #c1
     c0_2 = Connection(conflation, 'out1', pipe_cold, 'in1', label='c0_2') #c11
 
     c0_3 = Connection(pipe_cold, 'out1', split, 'in1', label='c0_3') #c2
@@ -110,8 +111,15 @@ def create_steam_net(steam_lca):
     hex_heat_sink.set_attr(pr=1,
                            Q=-steam_lca.params['heat'], 
                            power_connector_location="outlet")
-    c0_2.set_attr(#x=0,
-                p=1.513, #0.5 bar to atmospheric pressure 
+    
+    mains_sorted = sorted(steam_lca.params['mains'])
+    if steam_lca.main_pressure in mains_sorted:
+        idx = mains_sorted.index(steam_lca.main_pressure)
+        next_main = mains_sorted[idx - 1] if idx - 1 >= 0 else 1.013
+    else:
+        raise ValueError("Main pressure not found in mains list")
+    
+    c0_2.set_attr(p=steam_lca.main_pressure 
                 )
     pipe_cold.set_attr(pr=0.95, 
         Tamb = steam_lca.params['Tamb'],
@@ -142,13 +150,14 @@ def create_steam_net(steam_lca):
     
     wawa.set_attr(m=Ref(c1_6, steam_lca.params['makeup_factor'], 0))
     feed_pump.set_attr(eta_s =0.95)
-
+    condensate_pump.set_attr(eta_s=0.95)
     network_heat_sink.set_attr(pr=1, 
                                Q=-(steam_lca.params['heat_capacity_pipe_network']-steam_lca.params['heat']),
                                power_connector_location="outlet",
                                )
-    cnw3.set_attr(x=0)
-    c0_11.set_attr(x=0)
+    cnw2.set_attr(x=0)
+    c0_1.set_attr(x=0)
+    
     # create power connections:
     
     fuel_bus = PowerSource('boiler powersource')
