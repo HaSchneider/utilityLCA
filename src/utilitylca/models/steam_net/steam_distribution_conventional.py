@@ -12,7 +12,9 @@ from fluprodia import FluidPropertyDiagram
 
 
 import copy
+import logging
 
+logger = logging.getLogger(__name__)
 class steam_net(link.SimModel):
     reference={ 
         'type': 'misc',
@@ -30,30 +32,81 @@ class steam_net(link.SimModel):
     'This is needed to have a fixed pipe heat capacity.' \
     'The model considers physical, dissipative and pressure losses in the steam network.' \
     '' \
+    
+    parameters={
+        'needed_temperature':link.parameter(
+            name='needed_temperature',
+            default=230,
+            min=100,
+            max=230,
+            description='Needed temperature of the steam at the point of use in °C. Must be larger than 100 °C.',),
+        'makeup_factor':link.parameter(
+            name='makeup_factor',
+            default=0.05,
+            min=0,
+            max=1,
+            description='Factor of the amount of make up water. Must be between 0 and 1.',),
+        'leakage_factor':link.parameter(
+            name='leakage_factor',
+            default=0.075,
+            min=0,
+            max=1,
+            description='Factor of the amount of steam leakage. Must be between 0 and 1.',
+            reference= 'https://invenoeng.com/steam-system-thermal-cycle-efficiency-a-important-benchmark-in-the-steam-system/'),
+        'Tamb':link.parameter(
+            name='Tamb',
+            default=20,
+            min=0,
+            max=30,
+            description='Ambient temperature in °C. Must be between 0 and 30 °C.',),
+        'mains':link.parameter(
+            name='mains',
+            default=[4,8,16,40],
+            description='Main pressures in bar. Must be a list of positive values.',),
+        'max_pressure':link.parameter(
+            name='max_pressure',
+            default=130,
+            min=10,
+            max=200,
+            description='Maximum pressure in bar.',),
+        'heat_capacity_pipe_network':link.parameter(
+            name='heat_capacity_pipe_network',
+            default=20E6,
+            description='Heat capacity of the pipe network in W.',),
+        'heat':link.parameter(
+            name='heat',
+            default=1e6,
+            description='Transferred heat at process in W.',),
+        'wind_velocity':link.parameter(
+            name='wind_velocity',
+            default=3,
+            description='Wind velocity in m/s. Must be a positive value.',),
+        'insulation_thickness':link.parameter(
+            name='insulation_thickness',
+            default=0.1,
+            description='Insulation thickness in m. Must be a positive value.',
+            reference= 'https://doi.org/10.1016/j.applthermaleng.2016.03.010'),
+        'environment_media':link.parameter(
+            name='environment_media',
+            default='air',
+            description='Environment media for heat loss calculation. Must be either "air" or "water".',),
+        'pipe_depth':link.parameter(
+            name='pipe_depth',
+            default=2,
+            description='Depth of the pipe in m. Must be a positive value.',),
+        'pipe_length':link.parameter(
+            name='pipe_length',
+            default=1000,
+            description='Length of the pipe in m. Must be a positive value.',),
+    }
 
     def init_model(self, init_arg=None, **params):
         self.cond_inj = False
         self.trap=False # droplet seperator if steam is not saturated at point of use (due to losses in pipe)
         
-        # Steam net properties:
-        default_params={
-            'needed_temperature':230,
-            'makeup_factor':0.05,
-            'Tamb':20,
-            'leakage_factor':0.075,#https://invenoeng.com/steam-system-thermal-cycle-efficiency-a-important-benchmark-in-the-steam-system/
-            'mains':[4,8,16,40],
-            'max_pressure':130,
-            'heat_capacity_pipe_network': 20E6, #20 MW capacity of the pipe
-            'heat':1E6, # condensation heat at heat exchanger 
-            'wind_velocity':3,
-            'insulation_thickness':0.1, #https://doi.org/10.1016/j.applthermaleng.2016.03.010
-            'environment_media':'air',
-            'pipe_depth':2,
-            'pipe_length':1000,
-        } 
         self.desuperheat_steam=False
 
-        self.params= default_params | self.params | params
+        #self.params= default_params | self.params | params
         self.main_pressure = 0
         self.h_superheating_max_pressure = 0
         
@@ -70,18 +123,13 @@ class steam_net(link.SimModel):
         #self._calc_mains()
         self.model= Network()
         self.initialized = True
-    def _validate_params(self):
-        if self.params['needed_temperature'] <100:
-            raise ValueError('needed temperature must be larger than 100 °C')
-        if self.params['makeup_factor'] <0 or self.params['makeup_factor'] >1:
-            raise ValueError('makeup factor must be between 0 and 1')
-        if self.params['leakage_factor'] <0 or self.params['leakage_factor'] >1:
-            raise ValueError('leakage factor must be between 0 and 1')
+    
+    def _validate_params(self):        
         if self.params['max_pressure'] < self.params['mains'][-1]:
             raise ValueError('max pressure must be larger than the highest main pressure')
         if self.params['heat_capacity_pipe_network'] <self.params['heat']:
             raise ValueError('Heat capacity of the pipe network must be larger than the transferred heat at the heat exchanger')
-        
+    
     def calculate_model(self, **params):
         '''
         needed_pressure: steam pressure in bar
@@ -92,10 +140,11 @@ class steam_net(link.SimModel):
         self._validate_params()
         self._calc_mains()
         i=0
-        while i < 1:
+        while i < 3:
             try:
                 snwm.create_steam_net(self)
             except Exception as e:
+                logger.info(f'Calculation failed: {e}')
                 raise Exception(f'Calculation failed: {e}')
             else:
                 self.converged=True
@@ -235,8 +284,7 @@ class steam_net(link.SimModel):
         c1_4 = self.model.get_conn('c1_4')
         c1_5 = self.model.get_conn('c1_5')
         c1_6 = self.model.get_conn('c1_6')
-        cond_5 = self.model.get_conn('cond_5')
-        cond_1 = self.model.get_conn('cond_1')
+        
         c1_1 = self.model.get_conn('c1_1')
         c0_2 = self.model.get_conn('c0_1')
         c0_3 = self.model.get_conn('c0_3')
@@ -249,15 +297,18 @@ class steam_net(link.SimModel):
         turbine_grid = self.model.get_conn('e_turb_grid')
 
         leakage_loss= c_leak.m._val *(c_leak.h._val - muw2.h._val)
-        pipe_loss = self.model.get_conn('e_pi_sink').E._val
+        pipe_loss = self.model.get_conn('e_pi_sink').E._val 
         #(abs(c1_4.m._val *c1_5.h._val - c1_4.m._val * c1_4.h._val )
         #            + abs(c0_2.m._val * c0_2.h._val - c0_3.m._val * c0_3.h._val)
         #)
         self.elec_factor= abs((turbine_grid.E._val/hex_heat_sink.E._val).to_base_units().m )
         self.boiler_factor = abs((boiler.E._val/hex_heat_sink.E._val).to_base_units().m)
-        #self.losses=((abs(pipe_loss)+abs(leakage_loss))/
-        #             (abs(boiler.E._val)-abs(self.model.get_conn('e_turb').E._val)+self.model.get_conn('e_pump').E._val)
-        #             ).to_base_units().m
+        self.diss_losses=(abs(pipe_loss)/
+                     (abs(boiler.E._val)-abs(self.model.get_conn('e_turb').E._val)+self.model.get_conn('e_pump').E._val)
+                     ).to_base_units().m
+        self.leak_losses=(abs(leakage_loss)/
+                     (abs(boiler.E._val)-abs(self.model.get_conn('e_turb').E._val)+self.model.get_conn('e_pump').E._val)
+                     ).to_base_units().m
         
         self.losses=1-(
             (self.model.get_conn('e_heat_sink').E._val + 
@@ -273,6 +324,8 @@ class steam_net(link.SimModel):
                     - t_amb * (c1_5.s._val - c1_6.s._val))* c1_5.m._val
 
         if self.cond_inj:
+            cond_5 = self.model.get_conn('cond_5')
+            cond_1 = self.model.get_conn('cond_1')
             self.E_hs= ((cond_1.h._val -cond_5.h._val) 
                         - t_amb * (cond_1.s._val - cond_5.s._val))* cond_5.m._val
         else:
