@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>utilitylca.models.steam_net.steam_network_model &#8212; utilitylca unknown documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css?v=0ca6144b" />
+    <script src="../../../../_static/documentation_options.js?v=3f1b9271"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for utilitylca.models.steam_net.steam_network_model</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tespy.components</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Turbine</span><span class="p">,</span> <span class="n">Source</span><span class="p">,</span> <span class="n">Sink</span><span class="p">,</span> <span class="n">Pump</span><span class="p">,</span> 
+    <span class="n">Pipe</span><span class="p">,</span> <span class="n">CycleCloser</span><span class="p">,</span> <span class="n">SimpleHeatExchanger</span><span class="p">,</span> <span class="n">Valve</span><span class="p">,</span> <span class="n">Merge</span><span class="p">,</span> 
+    <span class="n">Splitter</span><span class="p">,</span> 
+    <span class="n">DropletSeparator</span><span class="p">,</span>
+    <span class="n">PowerSink</span><span class="p">,</span> <span class="n">PowerSource</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span>  <span class="n">PowerBus</span>
+<span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tespy.connections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Connection</span><span class="p">,</span> <span class="n">Ref</span><span class="p">,</span> <span class="n">PowerConnection</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="create_steam_net">
+<a class="viewcode-back" href="../../../../api/utilitylca.models.steam_net.html#utilitylca.models.steam_net.steam_network_model.create_steam_net">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_steam_net</span><span class="p">(</span><span class="n">steam_lca</span><span class="p">):</span>
+    
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;logs.log&#39;</span><span class="p">,</span> 
+                        <span class="n">filemode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span>
+                        <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+    <span class="n">steam_lca</span><span class="o">.</span><span class="n">cond_inj</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">steam_lca</span><span class="o">.</span><span class="n">trap</span><span class="o">=</span><span class="kc">False</span>
+    <span class="n">steam_lca</span><span class="o">.</span><span class="n">converged</span> <span class="o">=</span><span class="kc">False</span>
+
+    <span class="n">steam_lca</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">iterinfo</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">steam_lca</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="s1">&#39;degC&#39;</span><span class="p">,</span> <span class="n">pressure</span><span class="o">=</span><span class="s1">&#39;bar&#39;</span><span class="p">,</span> <span class="n">enthalpy</span><span class="o">=</span><span class="s1">&#39;kJ / kg&#39;</span><span class="p">)</span>
+    <span class="c1"># create components</span>
+    <span class="n">boiler</span> <span class="o">=</span> <span class="n">SimpleHeatExchanger</span><span class="p">(</span><span class="s1">&#39;steam boiler&#39;</span> <span class="p">,</span> <span class="n">dissipative</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">bpt</span> <span class="o">=</span> <span class="n">Turbine</span><span class="p">(</span><span class="s1">&#39;back pressure turbine&#39;</span><span class="p">)</span>
+    <span class="n">pipe_warm</span> <span class="o">=</span>  <span class="n">Pipe</span><span class="p">(</span><span class="s1">&#39;steam pipe&#39;</span><span class="p">,</span> <span class="n">dissipative</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    
+    <span class="n">valve</span> <span class="o">=</span> <span class="n">Valve</span><span class="p">(</span><span class="s1">&#39;controlvalve&#39;</span><span class="p">)</span>
+    <span class="n">hex_heat_sink</span> <span class="o">=</span> <span class="n">SimpleHeatExchanger</span><span class="p">(</span><span class="s1">&#39;hex heat sink&#39;</span><span class="p">,</span> <span class="n">dissipative</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">pipe_cold</span><span class="o">=</span> <span class="n">Pipe</span><span class="p">(</span><span class="s1">&#39;condensate pipe&#39;</span><span class="p">,</span><span class="n">dissipative</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">feed_pump</span><span class="o">=</span> <span class="n">Pump</span><span class="p">(</span><span class="s1">&#39;feedpump&#39;</span><span class="p">)</span>
+    <span class="n">condensate_pump</span><span class="o">=</span> <span class="n">Pump</span><span class="p">(</span><span class="s1">&#39;condensate pump&#39;</span><span class="p">)</span>
+    <span class="n">cycl</span><span class="o">=</span><span class="n">CycleCloser</span><span class="p">(</span><span class="s1">&#39;CycleCloser&#39;</span><span class="p">)</span>
+    
+    <span class="n">steam_losses</span> <span class="o">=</span> <span class="n">Sink</span><span class="p">(</span><span class="s1">&#39;steam losses&#39;</span><span class="p">)</span>
+    <span class="n">steam_leak</span><span class="o">=</span> <span class="n">Splitter</span><span class="p">(</span><span class="s2">&quot;steam leak&quot;</span><span class="p">)</span>
+    <span class="n">makeup_leak</span> <span class="o">=</span><span class="n">Source</span><span class="p">(</span><span class="s1">&#39;leak makeup&#39;</span><span class="p">)</span>
+    
+    <span class="n">makeup</span><span class="o">=</span><span class="n">Source</span><span class="p">(</span><span class="s2">&quot;Make-up water&quot;</span><span class="p">)</span>
+    <span class="n">blowdown</span><span class="o">=</span> <span class="n">Sink</span><span class="p">(</span><span class="s2">&quot;blowdown wastewater&quot;</span><span class="p">)</span>
+    <span class="n">cond_waste</span><span class="o">=</span> <span class="n">Sink</span><span class="p">(</span><span class="s2">&quot;pipe condensate wastewater&quot;</span><span class="p">)</span>
+    <span class="n">merge</span> <span class="o">=</span> <span class="n">Merge</span><span class="p">(</span><span class="s2">&quot;Makeup water feed&quot;</span><span class="p">,</span> <span class="n">num_in</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    
+    <span class="n">split</span><span class="o">=</span> <span class="n">Splitter</span><span class="p">(</span><span class="s2">&quot;remove wastewater&quot;</span><span class="p">)</span>
+    <span class="n">diversion</span><span class="o">=</span> <span class="n">Splitter</span><span class="p">(</span><span class="s2">&quot;divert steam from network&quot;</span><span class="p">)</span>
+    <span class="n">conflation</span><span class="o">=</span> <span class="n">Merge</span><span class="p">(</span><span class="s2">&quot;conflation condensate to network&quot;</span><span class="p">)</span>
+    <span class="n">network_heat_sink</span> <span class="o">=</span> <span class="n">SimpleHeatExchanger</span><span class="p">(</span><span class="s1">&#39;network condensation&#39;</span><span class="p">,</span> <span class="n">dissipative</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">valve_cond_nw</span> <span class="o">=</span> <span class="n">Valve</span><span class="p">(</span><span class="s1">&#39;relax_cond_network&#39;</span><span class="p">)</span>
+    <span class="n">valve_cond</span> <span class="o">=</span> <span class="n">Valve</span><span class="p">(</span><span class="s1">&#39;relax_cond&#39;</span><span class="p">)</span>
+
+    <span class="c1">#create connections:</span>
+    <span class="n">c0_7</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">cycl</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">boiler</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c0_7&#39;</span><span class="p">)</span> <span class="c1">#c05</span>
+    <span class="n">c1_6</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">boiler</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">bpt</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c1_6&#39;</span><span class="p">)</span> <span class="c1">#c04</span>
+    <span class="n">c1_5</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">bpt</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">pipe_warm</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c1_5&#39;</span><span class="p">)</span> <span class="c1">#c03</span>
+    <span class="n">c1_4</span><span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">pipe_warm</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">steam_leak</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c1_4&#39;</span><span class="p">)</span> <span class="c1">#c022</span>
+    <span class="n">c1_3</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">steam_leak</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">diversion</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;c1_3&#39;</span><span class="p">)</span> <span class="c1">#c023</span>
+
+    <span class="n">cnw1</span><span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">diversion</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">network_heat_sink</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;cnw1&#39;</span><span class="p">)</span>
+    <span class="n">cnw2</span><span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">network_heat_sink</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">valve_cond_nw</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;cnw2&#39;</span><span class="p">)</span>
+    <span class="n">cnw3</span><span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">valve_cond_nw</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">conflation</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;cnw3&#39;</span><span class="p">)</span>
+
+    <span class="n">c_leak</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">steam_leak</span><span class="p">,</span> <span class="s1">&#39;out2&#39;</span><span class="p">,</span> <span class="n">steam_losses</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c_leak&#39;</span><span class="p">)</span>
+    <span class="n">muw2</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">makeup_leak</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">merge</span><span class="p">,</span> <span class="s1">&#39;in3&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;muw2&#39;</span><span class="p">)</span>
+
+    <span class="n">c1_2</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">diversion</span><span class="p">,</span> <span class="s1">&#39;out2&#39;</span><span class="p">,</span> <span class="n">valve</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;c1_2&#39;</span><span class="p">)</span> <span class="c1">#c02</span>
+    <span class="n">c1_1</span><span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">valve</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">hex_heat_sink</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c1_1&#39;</span><span class="p">)</span> <span class="c1">#c01</span>
+    
+    <span class="n">c0_1</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">hex_heat_sink</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">condensate_pump</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c0_1&#39;</span><span class="p">)</span> <span class="c1">#c1</span>
+    <span class="n">c0_11</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">condensate_pump</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">conflation</span><span class="p">,</span> <span class="s1">&#39;in2&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c0_11&#39;</span><span class="p">)</span> <span class="c1">#c1</span>
+    <span class="n">c0_2</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">conflation</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">pipe_cold</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c0_2&#39;</span><span class="p">)</span> <span class="c1">#c11</span>
+
+    <span class="n">c0_3</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">pipe_cold</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">split</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c0_3&#39;</span><span class="p">)</span> <span class="c1">#c2</span>
+    <span class="n">c0_4</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">split</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">merge</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c0_4&#39;</span><span class="p">)</span> <span class="c1">#c3</span>
+    <span class="n">c0_5</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">merge</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">feed_pump</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c0_5&#39;</span><span class="p">)</span> <span class="c1">#c4</span>
+    <span class="n">c0_6</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">feed_pump</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">cycl</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c0_6&#39;</span><span class="p">)</span> <span class="c1">#c5</span>
+
+    <span class="n">muw</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">makeup</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">merge</span><span class="p">,</span> <span class="s1">&#39;in2&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;muw&#39;</span><span class="p">)</span>
+    <span class="n">wawa</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">split</span><span class="p">,</span> <span class="s1">&#39;out2&#39;</span><span class="p">,</span> <span class="n">blowdown</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="s1">&#39;c_blowdown&#39;</span><span class="p">)</span>
+
+    <span class="n">steam_lca</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_conns</span><span class="p">(</span><span class="n">c1_6</span><span class="p">,</span> <span class="n">c1_5</span><span class="p">,</span> <span class="n">c1_4</span><span class="p">,</span> <span class="n">c1_3</span><span class="p">,</span> <span class="n">c1_2</span><span class="p">,</span> <span class="n">c1_1</span><span class="p">,</span> 
+                              <span class="n">cnw1</span><span class="p">,</span> <span class="n">cnw2</span><span class="p">,</span><span class="n">cnw3</span><span class="p">,</span>
+                              <span class="n">c_leak</span><span class="p">,</span>
+                              <span class="n">c0_11</span><span class="p">,</span>
+                              <span class="n">c0_1</span><span class="p">,</span> <span class="n">c0_2</span><span class="p">,</span> <span class="n">c0_3</span><span class="p">,</span> <span class="n">c0_4</span><span class="p">,</span> <span class="n">c0_5</span><span class="p">,</span> <span class="n">c0_6</span><span class="p">,</span> <span class="n">c0_7</span><span class="p">,</span>
+                              <span class="n">muw</span><span class="p">,</span> <span class="n">wawa</span><span class="p">,</span> <span class="n">muw2</span><span class="p">)</span>
+    <span class="c1">#set attributes:</span>
+    <span class="n">boiler</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">pr</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">power_connector_location</span><span class="o">=</span><span class="s2">&quot;inlet&quot;</span><span class="p">)</span>
+    <span class="n">c1_6</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">fluid</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;H2O&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> 
+                    <span class="n">h</span><span class="o">=</span> <span class="n">steam_lca</span><span class="o">.</span><span class="n">h_superheating_max_pressure</span><span class="p">)</span>
+    <span class="n">c0_7</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">p0</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">main_pressure</span><span class="p">,)</span>
+    <span class="n">bpt</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">eta_s</span> <span class="o">=</span> <span class="mf">0.85</span><span class="p">,</span> <span class="p">)</span>
+    <span class="n">c1_5</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">main_pressure</span><span class="p">,</span> 
+                 <span class="n">h0</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">h_superheating_max_pressure</span><span class="p">,</span> 
+                 <span class="p">)</span>
+    <span class="n">pipe_warm</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">pr</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> 
+        <span class="n">Tamb</span> <span class="o">=</span> <span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;Tamb&#39;</span><span class="p">],</span> 
+        <span class="n">L</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;pipe_length&#39;</span><span class="p">],</span> 
+        <span class="n">D</span><span class="o">=</span><span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="n">ks</span><span class="o">=</span><span class="mf">4.57e-5</span><span class="p">,</span>
+        <span class="n">power_connector_location</span><span class="o">=</span><span class="s2">&quot;outlet&quot;</span><span class="p">,</span>
+        <span class="n">insulation_thickness</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;insulation_thickness&#39;</span><span class="p">]</span> <span class="p">,</span>
+        <span class="n">insulation_tc</span><span class="o">=</span> <span class="mf">0.035</span><span class="p">,</span> <span class="n">pipe_thickness</span><span class="o">=</span><span class="mf">0.004</span><span class="p">,</span><span class="n">material</span><span class="o">=</span><span class="s1">&#39;Steel&#39;</span><span class="p">,</span> 
+        <span class="n">wind_velocity</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;wind_velocity&#39;</span><span class="p">],</span> 
+        <span class="n">environment_media</span> <span class="o">=</span> <span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;environment_media&#39;</span><span class="p">]</span>
+            <span class="p">)</span> 
+    <span class="n">c_leak</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="n">Ref</span><span class="p">(</span><span class="n">c1_4</span><span class="p">,</span> <span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;leakage_factor&#39;</span><span class="p">],</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">c1_1</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">p</span> <span class="o">=</span> <span class="n">steam_lca</span><span class="o">.</span><span class="n">needed_pressure</span><span class="p">,</span>
+                 <span class="n">h0</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">h_superheating_max_pressure</span><span class="p">,</span>
+                 <span class="p">)</span>
+    <span class="n">hex_heat_sink</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">pr</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                           <span class="n">Q</span><span class="o">=-</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;heat&#39;</span><span class="p">],</span> 
+                           <span class="n">power_connector_location</span><span class="o">=</span><span class="s2">&quot;outlet&quot;</span><span class="p">)</span>
+    
+    <span class="n">mains_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;mains&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">steam_lca</span><span class="o">.</span><span class="n">main_pressure</span> <span class="ow">in</span> <span class="n">mains_sorted</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">mains_sorted</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">main_pressure</span><span class="p">)</span>
+        <span class="n">next_main</span> <span class="o">=</span> <span class="n">mains_sorted</span><span class="p">[</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1.013</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Main pressure not found in mains list&quot;</span><span class="p">)</span>
+    
+    <span class="n">c0_2</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">main_pressure</span> 
+                <span class="p">)</span>
+    <span class="n">pipe_cold</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">pr</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> 
+        <span class="n">Tamb</span> <span class="o">=</span> <span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;Tamb&#39;</span><span class="p">],</span>
+        <span class="n">L</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;pipe_length&#39;</span><span class="p">],</span> <span class="n">D</span><span class="o">=</span><span class="s1">&#39;var&#39;</span><span class="p">,</span>  <span class="n">ks</span><span class="o">=</span><span class="mf">4.57e-5</span><span class="p">,</span>
+        <span class="n">power_connector_location</span><span class="o">=</span><span class="s2">&quot;outlet&quot;</span><span class="p">,</span>
+        <span class="n">insulation_thickness</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;insulation_thickness&#39;</span><span class="p">]</span> <span class="p">,</span>
+        <span class="n">insulation_tc</span><span class="o">=</span> <span class="mf">0.035</span><span class="p">,</span> 
+        <span class="n">pipe_thickness</span><span class="o">=</span><span class="mf">0.004</span><span class="p">,</span><span class="n">material</span><span class="o">=</span><span class="s1">&#39;Steel&#39;</span><span class="p">,</span> 
+        <span class="n">wind_velocity</span><span class="o">=</span> <span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;wind_velocity&#39;</span><span class="p">],</span> 
+        <span class="n">environment_media</span> <span class="o">=</span> <span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;environment_media&#39;</span><span class="p">]</span>
+            <span class="p">)</span>
+
+    <span class="n">c0_5</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">p0</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">needed_pressure</span><span class="p">,</span>
+                <span class="p">)</span>
+    
+    <span class="n">c0_6</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;max_pressure&#39;</span><span class="p">],</span> 
+                <span class="n">h0</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">h_superheating_max_pressure</span><span class="p">,</span>
+                <span class="p">)</span>
+
+    <span class="n">muw</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="n">Ref</span><span class="p">(</span><span class="n">c1_6</span><span class="p">,</span> <span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;makeup_factor&#39;</span><span class="p">],</span> <span class="mi">0</span><span class="p">),</span> 
+                    <span class="n">T</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;Tamb&#39;</span><span class="p">],</span>
+                    <span class="n">fluid</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;H2O&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>  
+                    <span class="n">p0</span><span class="o">=</span><span class="mf">1.013</span><span class="p">)</span>
+    <span class="n">muw2</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="n">Ref</span><span class="p">(</span><span class="n">c_leak</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> 
+                    <span class="n">T</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;Tamb&#39;</span><span class="p">],</span>
+                    <span class="n">fluid</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;H2O&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> 
+                    <span class="n">p0</span><span class="o">=</span><span class="mf">1.013</span><span class="p">)</span>
+    
+    <span class="n">wawa</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="n">Ref</span><span class="p">(</span><span class="n">c1_6</span><span class="p">,</span> <span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;makeup_factor&#39;</span><span class="p">],</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">feed_pump</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">eta_s</span> <span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>
+    <span class="n">condensate_pump</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">eta_s</span><span class="o">=</span><span class="mf">0.95</span><span class="p">)</span>
+    <span class="n">network_heat_sink</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">pr</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
+                               <span class="n">Q</span><span class="o">=-</span><span class="p">(</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;heat_capacity_pipe_network&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;heat&#39;</span><span class="p">]),</span>
+                               <span class="n">power_connector_location</span><span class="o">=</span><span class="s2">&quot;outlet&quot;</span><span class="p">,</span>
+                               <span class="p">)</span>
+    <span class="n">cnw2</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">c0_1</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="c1"># create power connections:</span>
+    
+    <span class="n">fuel_bus</span> <span class="o">=</span> <span class="n">PowerSource</span><span class="p">(</span><span class="s1">&#39;boiler powersource&#39;</span><span class="p">)</span>
+    <span class="n">e_boil</span> <span class="o">=</span> <span class="n">PowerConnection</span><span class="p">(</span><span class="n">fuel_bus</span><span class="p">,</span> <span class="s1">&#39;power&#39;</span><span class="p">,</span> <span class="n">boiler</span><span class="p">,</span> <span class="s1">&#39;heat&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span> <span class="s1">&#39;e_boil&#39;</span><span class="p">)</span>
+    
+    <span class="n">turbine_gen</span> <span class="o">=</span> <span class="n">Generator</span><span class="p">(</span><span class="s1">&#39;turbines&#39;</span><span class="p">)</span>
+    <span class="n">turbine_gen</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">eta</span><span class="o">=</span> <span class="mf">0.9</span><span class="p">)</span>
+    <span class="n">turbine_grid</span> <span class="o">=</span> <span class="n">PowerSink</span><span class="p">(</span><span class="s1">&#39;grid&#39;</span><span class="p">)</span>
+    <span class="n">e_turb</span> <span class="o">=</span> <span class="n">PowerConnection</span><span class="p">(</span><span class="n">bpt</span><span class="p">,</span> <span class="s1">&#39;power&#39;</span><span class="p">,</span> <span class="n">turbine_gen</span><span class="p">,</span> <span class="s1">&#39;power_in&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;e_turb&#39;</span><span class="p">)</span>
+    <span class="n">e_turb_grid</span> <span class="o">=</span><span class="n">PowerConnection</span><span class="p">(</span><span class="n">turbine_gen</span><span class="p">,</span> <span class="s1">&#39;power_out&#39;</span><span class="p">,</span> <span class="n">turbine_grid</span><span class="p">,</span> <span class="s1">&#39;power&#39;</span><span class="p">,</span> 
+                                <span class="n">label</span><span class="o">=</span><span class="s1">&#39;e_turb_grid&#39;</span><span class="p">)</span>
+
+    <span class="n">pipe_diss_sink</span> <span class="o">=</span><span class="n">PowerSink</span><span class="p">(</span><span class="s1">&#39;pipe dissipative losses sink&#39;</span><span class="p">)</span>
+    <span class="n">pipe_diss_bus</span> <span class="o">=</span> <span class="n">PowerBus</span><span class="p">(</span><span class="s1">&#39;pipe dissipative losses bus&#39;</span><span class="p">,</span> <span class="n">num_in</span> <span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">num_out</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">e_pi_h</span> <span class="o">=</span> <span class="n">PowerConnection</span><span class="p">(</span><span class="n">pipe_warm</span><span class="p">,</span> <span class="s1">&#39;heat&#39;</span><span class="p">,</span> <span class="n">pipe_diss_bus</span><span class="p">,</span> <span class="s1">&#39;power_in1&#39;</span><span class="p">)</span>
+    <span class="n">e_pi_c</span> <span class="o">=</span> <span class="n">PowerConnection</span><span class="p">(</span><span class="n">pipe_cold</span><span class="p">,</span> <span class="s1">&#39;heat&#39;</span><span class="p">,</span> <span class="n">pipe_diss_bus</span><span class="p">,</span> <span class="s1">&#39;power_in2&#39;</span><span class="p">)</span>
+    <span class="n">e_pi_sink</span> <span class="o">=</span> <span class="n">PowerConnection</span><span class="p">(</span><span class="n">pipe_diss_bus</span><span class="p">,</span> <span class="s1">&#39;power_out1&#39;</span><span class="p">,</span> <span class="n">pipe_diss_sink</span><span class="p">,</span> <span class="s1">&#39;power&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;e_pi_sink&#39;</span><span class="p">)</span>
+    
+    <span class="n">heat_sink</span> <span class="o">=</span><span class="n">PowerSink</span><span class="p">(</span><span class="s1">&#39;heat sink&#39;</span><span class="p">)</span>
+    <span class="n">e_heat_sink</span> <span class="o">=</span><span class="n">PowerConnection</span><span class="p">(</span> <span class="n">hex_heat_sink</span><span class="p">,</span><span class="s1">&#39;heat&#39;</span><span class="p">,</span><span class="n">heat_sink</span><span class="p">,</span> <span class="s1">&#39;power&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;e_heat_sink&#39;</span><span class="p">)</span>
+
+    <span class="n">nw_heat_sink</span> <span class="o">=</span><span class="n">PowerSink</span><span class="p">(</span><span class="s1">&#39;nw heat sink&#39;</span><span class="p">)</span>
+    <span class="n">e_nw_heat_sink</span> <span class="o">=</span><span class="n">PowerConnection</span><span class="p">(</span> <span class="n">network_heat_sink</span><span class="p">,</span><span class="s1">&#39;heat&#39;</span><span class="p">,</span><span class="n">nw_heat_sink</span><span class="p">,</span> <span class="s1">&#39;power&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;e_nw_heat_sink&#39;</span><span class="p">)</span>
+
+    <span class="n">pump_psource</span> <span class="o">=</span> <span class="n">PowerSource</span><span class="p">(</span><span class="s1">&#39;feedpump powersource&#39;</span><span class="p">)</span>
+    <span class="n">e_pump</span> <span class="o">=</span> <span class="n">PowerConnection</span><span class="p">(</span><span class="n">pump_psource</span><span class="p">,</span> <span class="s1">&#39;power&#39;</span><span class="p">,</span> <span class="n">feed_pump</span><span class="p">,</span> <span class="s1">&#39;power&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;e_pump&#39;</span><span class="p">)</span>
+
+
+    <span class="n">steam_lca</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_conns</span><span class="p">(</span><span class="n">e_boil</span><span class="p">,</span>
+        <span class="n">e_turb</span><span class="p">,</span><span class="n">e_turb_grid</span><span class="p">,</span>
+                           <span class="n">e_pi_c</span><span class="p">,</span> <span class="n">e_pi_h</span><span class="p">,</span> <span class="n">e_pi_sink</span><span class="p">,</span>
+                           <span class="n">e_heat_sink</span><span class="p">,</span> <span class="n">e_nw_heat_sink</span><span class="p">,</span>
+                           <span class="n">e_pump</span>
+    <span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Start first solve&#39;</span><span class="p">)</span>
+    <span class="n">steam_lca</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="s1">&#39;design&#39;</span><span class="p">)</span>
+
+    <span class="c1">#2. Run: </span>
+
+    <span class="n">muw</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">muw</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">T</span><span class="o">=</span><span class="n">Ref</span><span class="p">(</span><span class="n">c0_3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">20</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Start second solve&#39;</span><span class="p">)</span>
+    <span class="n">steam_lca</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="s1">&#39;design&#39;</span><span class="p">)</span>
+
+    <span class="c1">#3. Run: implement condensate injection:</span>
+   <span class="c1"># if superheated inject condensate:</span>
+    <span class="k">if</span> <span class="n">c1_4</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">val</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">steam_lca</span><span class="o">.</span><span class="n">desuperheat_steam</span><span class="p">:</span>
+        <span class="n">steam_lca</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">del_conns</span><span class="p">(</span><span class="n">c1_1</span><span class="p">,</span> <span class="n">c0_1</span><span class="p">)</span>
+        <span class="n">merge_injection</span> <span class="o">=</span> <span class="n">Merge</span><span class="p">(</span><span class="s2">&quot;Injection&quot;</span><span class="p">)</span>
+        <span class="n">dummy_sink2</span><span class="o">=</span> <span class="n">Sink</span><span class="p">(</span><span class="s1">&#39;dummy sink2&#39;</span><span class="p">)</span>
+        <span class="n">injection_source</span> <span class="o">=</span><span class="n">Source</span><span class="p">(</span><span class="s1">&#39;injection_source&#39;</span><span class="p">)</span>
+        <span class="n">condensate_split</span><span class="o">=</span> <span class="n">Splitter</span><span class="p">(</span><span class="s2">&quot;split condensate&quot;</span><span class="p">)</span>
+        
+        <span class="n">c1_1</span><span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">valve</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">merge_injection</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c1_1&#39;</span><span class="p">)</span>
+        <span class="n">cond_3</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">injection_source</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">merge_injection</span><span class="p">,</span> <span class="s1">&#39;in2&#39;</span><span class="p">)</span>
+        <span class="n">cond_5</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">merge_injection</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">hex_heat_sink</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span> <span class="s1">&#39;cond_5&#39;</span><span class="p">)</span>
+
+        <span class="n">cond_1</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">hex_heat_sink</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">condensate_split</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;cond_1&#39;</span><span class="p">)</span>
+        <span class="n">cond_2</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">condensate_split</span><span class="p">,</span> <span class="s1">&#39;out2&#39;</span><span class="p">,</span> <span class="n">dummy_sink2</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">)</span>
+        <span class="n">c0_1</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">condensate_split</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">valve_cond</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;c0_1&#39;</span><span class="p">)</span>
+        <span class="n">steam_lca</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_conns</span><span class="p">(</span><span class="n">cond_1</span><span class="p">,</span> <span class="n">cond_2</span><span class="p">,</span> <span class="n">cond_3</span><span class="p">,</span><span class="n">cond_5</span><span class="p">,</span><span class="n">c1_1</span><span class="p">,</span><span class="n">c0_1</span><span class="p">)</span>
+
+        <span class="n">c1_1</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">p</span> <span class="o">=</span> <span class="n">steam_lca</span><span class="o">.</span><span class="n">needed_pressure</span><span class="p">)</span>
+        <span class="n">cond_1</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">c0_1</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="n">Ref</span><span class="p">(</span><span class="n">c1_1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+        <span class="n">cond_3</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> 
+                        <span class="n">fluid</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;H2O&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> 
+                        <span class="p">)</span>
+        <span class="n">cond_5</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Start third solve&#39;</span><span class="p">)</span>
+        <span class="n">steam_lca</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="s1">&#39;design&#39;</span><span class="p">)</span>
+        <span class="n">steam_lca</span><span class="o">.</span><span class="n">cond_inj</span> <span class="o">=</span><span class="kc">True</span>
+    <span class="c1"># when steam is not saturated trap condensate (experimental): </span>
+    <span class="k">elif</span> <span class="mi">0</span><span class="o">&lt;</span> <span class="n">c1_4</span><span class="o">.</span><span class="n">x</span><span class="o">.</span><span class="n">val</span> <span class="o">&lt;</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">merge</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">num_in</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">steam_lca</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">del_conns</span><span class="p">(</span><span class="n">c1_2</span><span class="p">)</span>
+        <span class="n">makeup_trap</span> <span class="o">=</span><span class="n">Source</span><span class="p">(</span><span class="s1">&#39;trap makeup&#39;</span><span class="p">)</span>
+        <span class="n">cond_trap</span><span class="o">=</span> <span class="n">DropletSeparator</span><span class="p">(</span><span class="s1">&#39;condensate trap&#39;</span><span class="p">)</span> 
+
+        <span class="n">muw3</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">makeup_trap</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">merge</span><span class="p">,</span> <span class="s1">&#39;in4&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;muw3&#39;</span><span class="p">)</span>
+        <span class="n">c023</span><span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">steam_leak</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">cond_trap</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">)</span>
+        <span class="n">c024</span><span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">cond_trap</span><span class="p">,</span> <span class="s1">&#39;out2&#39;</span><span class="p">,</span> <span class="n">valve</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">)</span>
+        <span class="n">c_trap_waste</span> <span class="o">=</span> <span class="n">Connection</span><span class="p">(</span><span class="n">cond_trap</span><span class="p">,</span> <span class="s1">&#39;out1&#39;</span><span class="p">,</span> <span class="n">cond_waste</span><span class="p">,</span> <span class="s1">&#39;in1&#39;</span><span class="p">,</span> <span class="s1">&#39;c_trap_waste &#39;</span><span class="p">)</span>
+        
+        <span class="n">steam_lca</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_conns</span><span class="p">(</span><span class="n">c023</span><span class="p">,</span> <span class="n">c024</span><span class="p">,</span> <span class="n">c_trap_waste</span><span class="p">,</span> <span class="n">muw3</span><span class="p">)</span>
+
+        <span class="n">muw3</span><span class="o">.</span><span class="n">set_attr</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="n">Ref</span><span class="p">(</span><span class="n">c_trap_waste</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">T</span><span class="o">=</span><span class="n">steam_lca</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;Tamb&#39;</span><span class="p">],</span>
+                      <span class="n">fluid</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;H2O&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> 
+                      <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Start third solve&#39;</span><span class="p">)</span>
+        <span class="n">steam_lca</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="s1">&#39;design&#39;</span><span class="p">)</span>
+        <span class="n">steam_lca</span><span class="o">.</span><span class="n">trap</span> <span class="o">=</span><span class="kc">True</span></div>
+
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">utilitylca</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing.html">Contributions &amp; Help</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">Module Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Hannes Schneider.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

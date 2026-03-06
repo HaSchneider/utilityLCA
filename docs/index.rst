@@ -1,26 +1,19 @@
 ==========
-utilitylca
+utilityLCA
 ==========
 
-This is the documentation of **utilitylca**.
+UtilityLCA contains a `TESPy <https://tespy.readthedocs.io/en/main/>`_ network wrapped in a `SiModIn <https://github.com/HaSchneider/SiModIn>`_ model for simulating the impact of distribution of steam as process heat transfer medium in chemical industry.
 
-.. note::
+..  figure:: /_static/steam_net.svg
+    :alt: Steam distribution topology
 
-    This is the main page of your project's `Sphinx`_ documentation.
-    It is formatted in `reStructuredText`_. Add additional pages
-    by creating rst-files in ``docs`` and adding them to the `toctree`_ below.
-    Use then `references`_ in order to link them from this page, e.g.
-    :ref:`authors` and :ref:`changes`.
+UtilityLCA can support more accurate LCA of processes by allowing:
 
-    It is also possible to refer to the documentation of other Python packages
-    with the `Python domain syntax`_. By default you can reference the
-    documentation of `Sphinx`_, `Python`_, `NumPy`_, `SciPy`_, `matplotlib`_,
-    `Pandas`_, `Scikit-Learn`_. You can add more by extending the
-    ``intersphinx_mapping`` in your Sphinx's ``conf.py``.
+* Temperature dependent steam impact calculation
+* Use of different multifunctionality approaches
+* Adjusting of site specific parameters
+* Simple integration in LCA workflow by using `SiModIn <https://github.com/HaSchneider/SiModIn>`_
 
-    The pretty useful extension `autodoc`_ is activated by default and lets
-    you include documentation from docstrings. Docstrings can be written in
-    `Google style`_ (recommended!), `NumPy style`_ and `classical style`_.
 
 
 Contents
@@ -29,11 +22,9 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   Overview <readme>
-   Contributions & Help <contributing>
+   Getting started <getting_started>
    License <license>
    Authors <authors>
-   Changelog <changelog>
    Module Reference <api/modules>
 
 

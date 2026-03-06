@@ -16,6 +16,20 @@ import logging
 
 logger = logging.getLogger(__name__)
 class steam_net(link.SimModel):
+    """
+    Class to implement a steam distribution model for conventional steam networks. The model is based on the
+    `SiModIn <https://github.com/HaSchneider/SiModIn>`_ model to calculate the temperature dependent impact of process heat from steam. 
+    The model considers physical, dissipative and pressure losses in the steam network.
+    
+    Parameters
+        ----------
+        Name : str
+            Name of the model.
+        **parameter
+            Parameters of the model. See parameters section for details.
+    
+    """
+
     reference={ 
         'type': 'misc',
         'key': '',
@@ -28,8 +42,6 @@ class steam_net(link.SimModel):
         'url': 'https://github.com/HaSchneider'
         }
     description='This SiModIn model can be used to calculate the temperature dependent impact of process heat from steam. ' \
-    'The model generates two products, the desdired steam at defined condensing temperature and the network steam. ' \
-    'This is needed to have a fixed pipe heat capacity.' \
     'The model considers physical, dissipative and pressure losses in the steam network.' \
     '' \
     
@@ -101,6 +113,12 @@ class steam_net(link.SimModel):
     }
 
     def init_model(self, init_arg=None, **params):
+        """
+        Initialising of the model.
+        
+        """
+        
+        
         self.cond_inj = False
         self.trap=False # droplet seperator if steam is not saturated at point of use (due to losses in pipe)
         
@@ -131,12 +149,11 @@ class steam_net(link.SimModel):
             raise ValueError('Heat capacity of the pipe network must be larger than the transferred heat at the heat exchanger')
     
     def calculate_model(self, **params):
-        '''
-        needed_pressure: steam pressure in bar
-        heat: transfered heat in W
-        makeup_factor: factor of the amount of make up water default= 0.02 
-        net_pressure: steam net pressure in bar
-        '''
+        """
+        Method to calculate the steam net model.
+        """
+        
+
         self._validate_params()
         self._calc_mains()
         i=0
@@ -159,6 +176,11 @@ class steam_net(link.SimModel):
     
     
     def define_flows(self):
+        """
+        Define the technosphere and biosphere flows of the model based on the calculated model. 
+        """
+
+
         if not self.converged:
             self.calculate_model()
 
@@ -227,7 +249,8 @@ class steam_net(link.SimModel):
         
 
     def recalculate_model(self, **params):
-
+        """
+        """
         self._calc_mains()
         try:
             self.change_parameters()
