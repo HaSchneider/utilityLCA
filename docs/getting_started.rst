@@ -78,27 +78,27 @@ To link LCA datasets to the model, the technosphere flows needs to be generated 
 
 For LCA calculation, the needed brightway25 dataset needs to be assigned to the technosphere flows.
 
-.. dropdown:: The brightway25 code for searching ecoinvent datasets are shown here.
+The brightway25 code for searching ecoinvent datasets are shown here:
 
-    .. code-block:: python
+.. code-block:: python
 
-        import bw2data as bd
+    import bw2data as bd
 
+
+    bd.projects.set_current('steam_distribution')
     
-        bd.projects.set_current('steam_distribution')
-        
-        ei=bd.Database('ecoinvent-3.11-cutoff')
+    ei=bd.Database('ecoinvent-3.11-cutoff')
 
-        ei_heat=[act for act in ei if 'heat production, at hard coal industrial furnace 1-10MW' in act['name']
-        and 'Europe without Switzerland' in act['location'] ][0]
+    ei_heat=[act for act in ei if 'heat production, at hard coal industrial furnace 1-10MW' in act['name']
+    and 'Europe without Switzerland' in act['location'] ][0]
 
-        ei_water=[act for act in ei if 'market for tap water' in act['name']
-        and 'Europe without Switzerland' in act['location'] ][0]
+    ei_water=[act for act in ei if 'market for tap water' in act['name']
+    and 'Europe without Switzerland' in act['location'] ][0]
 
-        ei_electricity=[act for act in ei if 'market for electricity, medium' in act['name']][0]
+    ei_electricity=[act for act in ei if 'market for electricity, medium' in act['name']][0]
 
-        bio=bd.Database('ecoinvent-3.11-biosphere')
-        water_bio=bio.get('51254820-3456-4373-b7b4-056cf7b16e01')
+    bio=bd.Database('ecoinvent-3.11-biosphere')
+    water_bio=bio.get('51254820-3456-4373-b7b4-056cf7b16e01')
 
 Then, the datasets are assigned to the technosphere flows and the impact categories are defined for the impact calculation.
 
