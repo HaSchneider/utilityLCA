@@ -23,6 +23,7 @@ Contents
    :maxdepth: 2
 
    Getting started <getting_started>
+   Features <features>
    License <license>
    Authors <authors>
    Module Reference <api/modules>

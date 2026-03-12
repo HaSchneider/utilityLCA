@@ -34,23 +34,7 @@ The following code shows how to create a steam distribution model with custom pa
                         insulation_thickness=0.1
                         )
 
-The full list of parameters and their default values are:
-
-==========================  ======  =============
-Parameter                   Unit    Default value
-==========================  ======  =============
-Makeup factor               %       5	
-Ambient temperature         °C      20	
-Leakage factor              %       7.5	
-Steam generation pressure   bara    130	
-Pipeline capacity           MW      20	
-Process heat demand         MW      1	
-Wind velocity               m/s     3  	
-Insulation thickness        m       0.1	
-Environment                         `Air`	
-Pipe length                 m       1000	
-==========================  ======  =============
-
+The full list of parameters and their default values are shown in :ref:`features`.
 The parameters can also be changed later explicitly by:
 
 
