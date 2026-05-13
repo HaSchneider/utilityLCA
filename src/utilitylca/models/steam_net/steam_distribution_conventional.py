@@ -50,8 +50,8 @@ class steam_net(link.SimModel, template.ModelTemplate):
         'needed_temperature':link.parameter(
             name='needed_temperature',
             default=180,
-            min=100,
-            max=230,
+            min=80,
+            max=250,
             description='Needed temperature of the steam at the point of use in °C. Must be larger than 100 °C.',),
         'makeup_factor':link.parameter(
             name='makeup_factor',
@@ -173,8 +173,9 @@ class steam_net(link.SimModel, template.ModelTemplate):
     
     def _change_temp(self, value):
         self._calc_mains()
-        self.model.get_conn('c1_5').set_attr(p= value)
-        self.model.get_conn('c0_2').set_attr(p= value)
+        self.model.get_conn('c1_5').set_attr(p= self.main_pressure)
+        self.model.get_conn('c0_2').set_attr(p= self.main_pressure)
+        self.model.get_conn('c1_1').set_attr(p= self.needed_pressure)
   
 
     def _change_heat(self, value):
@@ -419,7 +420,7 @@ class steam_net(link.SimModel, template.ModelTemplate):
         self._calc_pressure(temp)
         s_superheating_max_pressure=  PropsSI('S','P',self.params['mains'][0]*1E5,'Q',1,'IF97::water') 
         self.h_superheating_max_pressure=  PropsSI('H','P',self.params['max_pressure']*1E5,'S',s_superheating_max_pressure,'IF97::water') *1E-3
-        if self.needed_pressure*1.05 > self.params['mains'][-1]:
+        if self.needed_pressure*1.02 > self.params['mains'][-1]:
             print('needed pressure larger than net pressure!')
         self.main_pressure = min((x for x in self.params['mains'] if x >= self.needed_pressure*1.01), default=None) 
 
