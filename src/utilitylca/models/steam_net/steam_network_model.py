@@ -16,12 +16,10 @@ def create_steam_net(steam_lca):
     logging.basicConfig(filename='logs.log', 
                         filemode="w",
                         level=logging.INFO)
-    steam_lca.cond_inj = False
-    steam_lca.trap=False
-    steam_lca.converged =False
 
-    steam_lca.model.set_attr(iterinfo=False)
-    steam_lca.model.units.set_defaults(temperature='degC', pressure='bar', enthalpy='kJ / kg')
+    steam_lca.model.iterinfo=False
+    steam_lca.model.units.set_defaults(temperature='degC', 
+                                       pressure='bar', enthalpy='kJ / kg')
     # create components
     boiler = SimpleHeatExchanger('steam boiler' , dissipative=False)
     bpt = Turbine('back pressure turbine')
@@ -87,7 +85,7 @@ def create_steam_net(steam_lca):
                               muw, wawa, muw2)
     #set attributes:
     boiler.set_attr(pr = 1, power_connector_location="inlet")
-    c1_6.set_attr(fluid={"H2O": 1}, 
+    c1_6.set_attr(fluid={"water": 1}, 
                     h= steam_lca.h_superheating_max_pressure)
     c0_7.set_attr(p0=steam_lca.main_pressure,)
     bpt.set_attr(eta_s = 0.85, )
@@ -95,64 +93,58 @@ def create_steam_net(steam_lca):
                  h0=steam_lca.h_superheating_max_pressure, 
                  )
     pipe_warm.set_attr(pr=0.95, 
-        Tamb = steam_lca.params['Tamb'], 
-        L=steam_lca.params['pipe_length'], 
+        Tamb = steam_lca.parameters['Tamb'].default, 
+        L=steam_lca.parameters['pipe_length'].default, 
         D='var', ks=4.57e-5,
         power_connector_location="outlet",
-        insulation_thickness=steam_lca.params['insulation_thickness'] ,
+        insulation_thickness=steam_lca.parameters['insulation_thickness'].default ,
         insulation_tc= 0.035, pipe_thickness=0.004,material='Steel', 
-        wind_velocity=steam_lca.params['wind_velocity'], 
-        environment_media = steam_lca.params['environment_media']
+        wind_velocity=steam_lca.parameters['wind_velocity'].default, 
+        environment_media = steam_lca.parameters['environment_media'].default
             ) 
-    c_leak.set_attr(m=Ref(c1_4, steam_lca.params['leakage_factor'], 0))
+    c_leak.set_attr(m=Ref(c1_4, steam_lca.parameters['leakage_factor'].default, 0))
     c1_1.set_attr(p = steam_lca.needed_pressure,
                  h0=steam_lca.h_superheating_max_pressure,
                  )
     hex_heat_sink.set_attr(pr=1,
-                           Q=-steam_lca.params['heat'], 
+                           Q=-steam_lca.parameters['heat'].default, 
                            power_connector_location="outlet")
     
-    mains_sorted = sorted(steam_lca.params['mains'])
-    if steam_lca.main_pressure in mains_sorted:
-        idx = mains_sorted.index(steam_lca.main_pressure)
-        next_main = mains_sorted[idx - 1] if idx - 1 >= 0 else 1.013
-    else:
-        raise ValueError("Main pressure not found in mains list")
     
     c0_2.set_attr(p=steam_lca.main_pressure 
                 )
     pipe_cold.set_attr(pr=0.95, 
-        Tamb = steam_lca.params['Tamb'],
-        L=steam_lca.params['pipe_length'], D='var',  ks=4.57e-5,
+        Tamb = steam_lca.parameters['Tamb'].default,
+        L=steam_lca.parameters['pipe_length'].default, D='var',  ks=4.57e-5,
         power_connector_location="outlet",
-        insulation_thickness=steam_lca.params['insulation_thickness'] ,
+        insulation_thickness=steam_lca.parameters['insulation_thickness'].default ,
         insulation_tc= 0.035, 
         pipe_thickness=0.004,material='Steel', 
-        wind_velocity= steam_lca.params['wind_velocity'], 
-        environment_media = steam_lca.params['environment_media']
+        wind_velocity= steam_lca.parameters['wind_velocity'].default, 
+        environment_media = steam_lca.parameters['environment_media'].default
             )
 
     c0_5.set_attr(p0=steam_lca.needed_pressure,
                 )
     
-    c0_6.set_attr(p=steam_lca.params['max_pressure'], 
+    c0_6.set_attr(p=steam_lca.parameters['max_pressure'].default, 
                 h0=steam_lca.h_superheating_max_pressure,
                 )
 
-    muw.set_attr(m=Ref(c1_6, steam_lca.params['makeup_factor'], 0), 
-                    T=steam_lca.params['Tamb'],
-                    fluid={"H2O": 1},  
+    muw.set_attr(m=Ref(c1_6, steam_lca.parameters['makeup_factor'].default, 0), 
+                    T=steam_lca.parameters['Tamb'].default,
+                    fluid={"water": 1},  
                     p0=1.013)
     muw2.set_attr(m=Ref(c_leak, 1, 0), 
-                    T=steam_lca.params['Tamb'],
-                    fluid={"H2O": 1}, 
+                    T=steam_lca.parameters['Tamb'].default,
+                    fluid={"water": 1}, 
                     p0=1.013)
     
-    wawa.set_attr(m=Ref(c1_6, steam_lca.params['makeup_factor'], 0))
+    wawa.set_attr(m=Ref(c1_6, steam_lca.parameters['makeup_factor'].default, 0))
     feed_pump.set_attr(eta_s =0.95)
     condensate_pump.set_attr(eta_s=0.95)
     network_heat_sink.set_attr(pr=1, 
-                               Q=-(steam_lca.params['heat_capacity_pipe_network']-steam_lca.params['heat']),
+                               Q=-(steam_lca.parameters['heat_capacity_pipe_network'].default-steam_lca.parameters['heat'].default),
                                power_connector_location="outlet",
                                )
     cnw2.set_attr(x=0)
@@ -195,7 +187,7 @@ def create_steam_net(steam_lca):
     )
     logger.info('Start first solve')
     steam_lca.model.solve('design')
-
+    logger.info('First solve successfull')
     #2. Run: 
 
     muw.set_attr(T=None)
@@ -225,7 +217,7 @@ def create_steam_net(steam_lca):
         cond_1.set_attr(x=0)
         c0_1.set_attr(m=Ref(c1_1,1,0))
         cond_3.set_attr(x=0, 
-                        fluid={"H2O": 1}, 
+                        fluid={"water": 1}, 
                         )
         cond_5.set_attr(x=1)
         logger.info('Start third solve')
@@ -245,8 +237,8 @@ def create_steam_net(steam_lca):
         
         steam_lca.model.add_conns(c023, c024, c_trap_waste, muw3)
 
-        muw3.set_attr(m=Ref(c_trap_waste, 1, 0), T=steam_lca.params['Tamb'],
-                      fluid={"H2O": 1}, 
+        muw3.set_attr(m=Ref(c_trap_waste, 1, 0), T=steam_lca.parameters['Tamb'].default,
+                      fluid={"water": 1}, 
                       )
         logger.info('Start third solve')
         steam_lca.model.solve('design')

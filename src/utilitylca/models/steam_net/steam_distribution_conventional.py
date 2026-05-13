@@ -1,6 +1,7 @@
 
 from tespy.networks import Network
 from tespy.connections import  Ref
+from tespy.models import  template
 
 from simodin import interface as link
 from . import steam_network_model as snwm
@@ -15,7 +16,7 @@ import copy
 import logging
 
 logger = logging.getLogger(__name__)
-class steam_net(link.SimModel):
+class steam_net(link.SimModel, template.ModelTemplate):
     """
     Class to implement a steam distribution model for conventional steam networks. The model is based on the
     `SiModIn <https://github.com/HaSchneider/SiModIn>`_ model to calculate the temperature dependent impact of process heat from steam. 
@@ -48,7 +49,7 @@ class steam_net(link.SimModel):
     parameters={
         'needed_temperature':link.parameter(
             name='needed_temperature',
-            default=230,
+            default=180,
             min=100,
             max=230,
             description='Needed temperature of the steam at the point of use in °C. Must be larger than 100 °C.',),
@@ -111,14 +112,8 @@ class steam_net(link.SimModel):
             default=1000,
             description='Length of the pipe in m. Must be a positive value.',),
     }
-
-    def init_model(self, init_arg=None, **params):
-        """
-        Initialising of the model.
-        
-        """
-        
-        
+    def _create_network(self) -> None:
+        super()._create_network()
         self.cond_inj = False
         self.trap=False # droplet seperator if steam is not saturated at point of use (due to losses in pipe)
         
@@ -138,9 +133,100 @@ class steam_net(link.SimModel):
 
         self.converged = False
         self._init_mains()
-        #self._calc_mains()
-        self.model= Network()
+        
+        self._validate_params()
+        self._calc_mains()
+
+        mains_sorted = sorted(self.params['mains'])
+        if self.main_pressure in mains_sorted:
+            idx = mains_sorted.index(self.main_pressure)
+            next_main = mains_sorted[idx - 1] if idx - 1 >= 0 else 1.013
+        else:
+            raise ValueError("Main pressure not found in mains list")
+        
+        self.model= self.nw
+        
+        snwm.create_steam_net(self)
+        self._result()
         self.initialized = True
+        
+    def _parameter_lookup(self) -> dict:
+        #return super()._parameter_lookup()
+
+        return {
+            "Tamb": {'set':self._change_Tamb},
+            "insulation_thickness":{'set':self._change_insulation},
+            "wind_velocity": {'set':self._change_wind},
+            "environment_media": {'set':self._change_env},
+            "pipe_length": {'set':self._change_length},
+            "needed_temperature":{'set':self._change_temp},
+            "heat": {'set':self._change_heat},
+            "heat_capacity_pipe_network": {'set':self._change_heat},
+            "network condensation": ["Components", "a1", "Q"],
+
+            "leakage_factor": {'set':self._change_leakage},
+            "max_pressure": ["Connection", "c0_6", "max_pressure"],
+            "makeup_factor": {'set':self._change_makeup},
+            "max_pressure": ["Connections", "c0_6", "p"],
+            #"mains":{'set':self._change_mains},
+        }
+    
+    def _change_temp(self, value):
+        self._calc_mains()
+        self.model.get_conn('c1_5').set_attr(p= value)
+        self.model.get_conn('c0_2').set_attr(p= value)
+  
+
+    def _change_heat(self, value):
+        self.model.get_comp('network condensation').set_attr(
+            Q= -(self.params['heat_capacity_pipe_network']-value) )
+        self.model.get_comp('hex heat sink').set_attr(Q=-value)
+
+    def _change_heat_capa(self, value):
+        self.model.get_comp('network condensation').set_attr(
+            Q= -(value-self.params['heat'])            )   
+
+    def _change_makeup(self, value):
+        c1_6=self.model.get_conn('c1_6')
+        self.model.get_conn('muw').set_attr(m=Ref(c1_6, value, 0))
+        self.model.get_conn('c_blowdown').set_attr(m=Ref(c1_6, value, 0))
+        
+    def _change_leakage(self, value):
+        c1_4=self.model.get_conn('c1_4')
+        self.model.get_conn('c_leak').set_attr(m=Ref(c1_4, value, 0))
+
+    def _change_Tamb(self, value):
+        self.model.get_comp('steam pipe').set_attr(Tamb= value)
+        self.model.get_comp('condensate pipe').set_attr(Tamb= value)
+        self.model.get_conn('c1_6').set_attr(T=value)
+        self.model.get_conn('c_leak').set_attr(T= value)
+        self.model.get_conn('muw').set_attr(T= value)
+        self.model.get_conn('muw2').set_attr(T= value)
+
+    def _change_insulation(self, value):
+        self.model.get_comp('steam pipe').set_attr(insulation_thickness= value)
+        self.model.get_comp('condensate pipe').set_attr(insulation_thickness= value)
+    
+    def _change_wind(self, value):
+        self.model.get_comp('steam pipe').set_attr(wind_velocity= value)
+        self.model.get_comp('condensate pipe').set_attr(wind_velocity= value)
+    
+    def _change_env(self,value):
+        self.model.get_comp('steam pipe').set_attr(environment_media= value)
+        self.model.get_comp('condensate pipe').set_attr(environment_media= value)
+    
+    def _change_length(self,value):
+        self.model.get_comp('steam pipe').set_attr(L= value)
+        self.model.get_comp('condensate pipe').set_attr(L= value)
+
+    def init_model(self, init_arg=None):
+        """
+        Abstract simodin class. Initialising of the model.
+        
+        """
+        
+        self._create_network()
+        
     
     def _validate_params(self):        
         if self.params['max_pressure'] < self.params['mains'][-1]:
@@ -152,15 +238,23 @@ class steam_net(link.SimModel):
         """
         Method to calculate the steam net model.
         """
-        
 
         self._validate_params()
         self._calc_mains()
+        mains_sorted = sorted(self.params['mains'])
+        if self.main_pressure in mains_sorted:
+            idx = mains_sorted.index(self.main_pressure)
+            next_main = mains_sorted[idx - 1] if idx - 1 >= 0 else 1.013
+        else:
+            raise ValueError("Main pressure not found in mains list")
         i=0
         while i < 3:
             try:
-                snwm.create_steam_net(self)
+                #snwm.create_steam_net(self)
+                print('changed params:', params)
+                self.solve_model_design(**params)
             except Exception as e:
+                print('did not solve')
                 logger.info(f'Calculation failed: {e}')
                 raise Exception(f'Calculation failed: {e}')
             else:
@@ -248,60 +342,6 @@ class steam_net(link.SimModel):
             )}
         
 
-    def recalculate_model(self, **params):
-        """
-        """
-        self._calc_mains()
-        try:
-            self.change_parameters()
-        except Exception as e:
-            raise Exception(e)
-
-        self.converged = False
-        try:
-            self.model.solve('design')
-        except Exception as e:
-            raise Exception(e)
-        self._result()
-        #self.calculate_impact()
-        self.converged=True
-        self.old_nw = self.model
-
-
-    def change_parameters(self):
-        # makeup_factor:
-
-        c1_6 = self.model.get_conn('c1_6')
-        c1_4 = self.model.get_conn('c1_4')
-        muw= self.model.get_conn('muw')
-        
-        muw2=self.model.get_conn('muw2')
-
-        self.model.get_comp('steam pipe').set_attr(
-            Tamb = self.params['Tamb'], 
-            L = self.params['pipe_length'],
-            insulation_thickness= self.params['insulation_thickness'],
-            wind_velocity=self.params['wind_velocity'],
-            )
-        self.model.get_comp('condensate pipe').set_attr(
-            Tamb = self.params['Tamb'], 
-            L = self.params['pipe_length'],
-            insulation_thickness= self.params['insulation_thickness'],
-            wind_velocity=self.params['wind_velocity'],
-            )
-        
-        self.model.get_comp('hex heat sink').set_attr(Q=-self.params['heat'])
-
-        #muw
-        muw.set_attr(m=Ref(c1_6, self.params['makeup_factor'], 0),)
-        muw2.set_attr(T= self.params['Tamb'])
-
-        #leakage_factor:
-        self.model.get_conn('c_leak').set_attr(m=Ref(c1_4, self.params['leakage_factor'], 0))
-
-        #needed pressure:
-        self.model.get_conn('c1_1').set_attr(p = self.needed_pressure)
-
     def _result(self):
         c_leak = self.model.get_conn('c_leak')
         c1_4 = self.model.get_conn('c1_4')
@@ -359,8 +399,12 @@ class steam_net(link.SimModel):
         
         self.alloc_ex = (self.E_bpt /(self.E_hs + self.E_bpt + self.E_nw_hs)).m
 
-    def _calc_pressure(self):
-        self.needed_pressure= PropsSI('P','Q',0,'T',self.params['needed_temperature']+273,'IF97::water')*1E-5
+    def _calc_pressure(self, temp=None):
+        if temp==None:
+            temp=self.params['needed_temperature']+273
+        else:
+            temp= temp+273
+        self.needed_pressure= PropsSI('P','Q',0,'T',temp,'IF97::water')*1E-5
         
     def _init_mains(self):
         self.params['mains'].sort()
@@ -370,9 +414,9 @@ class steam_net(link.SimModel):
             self.main_dict[str(pres)]['pressure'] = pres
             self.main_dict[str(pres)]['temperature'] =PropsSI('T', 'P', pres*1E5, 'Q', 1, 'IF97::water') - 273.15 # in °C
             self.main_dict[str(pres)]['impact'] = None
-    def _calc_mains(self): 
+    def _calc_mains(self, temp=None): 
         self.params['mains'].sort()
-        self._calc_pressure()
+        self._calc_pressure(temp)
         s_superheating_max_pressure=  PropsSI('S','P',self.params['mains'][0]*1E5,'Q',1,'IF97::water') 
         self.h_superheating_max_pressure=  PropsSI('H','P',self.params['max_pressure']*1E5,'S',s_superheating_max_pressure,'IF97::water') *1E-3
         if self.needed_pressure*1.05 > self.params['mains'][-1]:
