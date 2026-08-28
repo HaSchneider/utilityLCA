@@ -112,6 +112,10 @@ class steam_net(link.SimModel, template.ModelTemplate):
             default=1000,
             description='Length of the pipe in m. Must be a positive value.',),
     }
+    def __init__(self,  name, init_arg=None):
+        link.SimModel.__init__(self,  name, init_arg)
+        template.ModelTemplate.__init__(self)
+
     def _create_network(self) -> None:
         super()._create_network()
         self.cond_inj = False
@@ -161,7 +165,7 @@ class steam_net(link.SimModel, template.ModelTemplate):
             "pipe_length": {'set':self._change_length},
             "needed_temperature":{'set':self._change_temp},
             "heat": {'set':self._change_heat},
-            "heat_capacity_pipe_network": {'set':self._change_heat},
+            "heat_capacity_pipe_network": {'set':self._change_heat_capa},
             "network condensation": ["Components", "a1", "Q"],
 
             "leakage_factor": {'set':self._change_leakage},
@@ -199,8 +203,8 @@ class steam_net(link.SimModel, template.ModelTemplate):
     def _change_Tamb(self, value):
         self.model.get_comp('steam pipe').set_attr(Tamb= value)
         self.model.get_comp('condensate pipe').set_attr(Tamb= value)
-        self.model.get_conn('c1_6').set_attr(T=value)
-        self.model.get_conn('c_leak').set_attr(T= value)
+        #self.model.get_conn('c1_6').set_attr(T=value)
+        #self.model.get_conn('c_leak').set_attr(T= value)
         self.model.get_conn('muw').set_attr(T= value)
         self.model.get_conn('muw2').set_attr(T= value)
 
@@ -252,7 +256,7 @@ class steam_net(link.SimModel, template.ModelTemplate):
         while i < 3:
             try:
                 #snwm.create_steam_net(self)
-                print('changed params:', params)
+                #print('changed params:', params)
                 self.solve_model_design(**params)
             except Exception as e:
                 print('did not solve')

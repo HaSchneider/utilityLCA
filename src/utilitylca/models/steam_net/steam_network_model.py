@@ -84,7 +84,8 @@ def create_steam_net(steam_lca):
                               c0_1, c0_2, c0_3, c0_4, c0_5, c0_6, c0_7,
                               muw, wawa, muw2)
     #set attributes:
-    boiler.set_attr(pr = 1, power_connector_location="inlet")
+    boiler.set_attr(pr = 1, #power_connector_location="inlet"
+                    )
     c1_6.set_attr(fluid={"water": 1}, 
                     h= steam_lca.h_superheating_max_pressure)
     c0_7.set_attr(p0=steam_lca.main_pressure,)
@@ -96,7 +97,7 @@ def create_steam_net(steam_lca):
         Tamb = steam_lca.parameters['Tamb'].default, 
         L=steam_lca.parameters['pipe_length'].default, 
         D='var', ks=4.57e-5,
-        power_connector_location="outlet",
+        #power_connector_location="outlet",
         insulation_thickness=steam_lca.parameters['insulation_thickness'].default ,
         insulation_tc= 0.035, pipe_thickness=0.004,material='Steel', 
         wind_velocity=steam_lca.parameters['wind_velocity'].default, 
@@ -108,7 +109,8 @@ def create_steam_net(steam_lca):
                  )
     hex_heat_sink.set_attr(pr=1,
                            Q=-steam_lca.parameters['heat'].default, 
-                           power_connector_location="outlet")
+                           #power_connector_location="outlet"
+                           )
     
     
     c0_2.set_attr(p=steam_lca.main_pressure 
@@ -116,7 +118,7 @@ def create_steam_net(steam_lca):
     pipe_cold.set_attr(pr=0.95, 
         Tamb = steam_lca.parameters['Tamb'].default,
         L=steam_lca.parameters['pipe_length'].default, D='var',  ks=4.57e-5,
-        power_connector_location="outlet",
+        #power_connector_location="outlet",
         insulation_thickness=steam_lca.parameters['insulation_thickness'].default ,
         insulation_tc= 0.035, 
         pipe_thickness=0.004,material='Steel', 
@@ -145,7 +147,7 @@ def create_steam_net(steam_lca):
     condensate_pump.set_attr(eta_s=0.95)
     network_heat_sink.set_attr(pr=1, 
                                Q=-(steam_lca.parameters['heat_capacity_pipe_network'].default-steam_lca.parameters['heat'].default),
-                               power_connector_location="outlet",
+                               #power_connector_location="outlet",
                                )
     cnw2.set_attr(x=0)
     c0_1.set_attr(x=0)
