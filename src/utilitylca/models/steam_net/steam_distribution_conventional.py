@@ -213,12 +213,11 @@ class steam_net(steam_net_base):
         'type': 'misc',
         'key': '',
         'author' :'Hannes Schneider',
-        'title'  : 'tba',
-        'license': 'tba',
+        'title'  : 'Generic model for determining the environmental impact of process steam supply',
         'location':'',
         'year': '2025',
-        'doi': 'tba',
-        'url': 'https://github.com/HaSchneider'
+        'doi': 'https://doi.org/10.1007/s44498-026-00180-3',
+        'url': 'https://link.springer.com/article/10.1007/s44498-026-00180-3?utm_source=rct_congratemailt&utm_medium=email&utm_campaign=oa_20260926&utm_content=10.1007/s44498-026-00180-3'
         }
     description='This SiModIn model can be used to calculate the temperature dependent impact of process heat from steam. ' \
     'The model considers physical, dissipative and pressure losses in the steam network.' \
