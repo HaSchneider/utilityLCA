@@ -99,7 +99,7 @@ class steam_net_base(link.SimModel, template.ModelTemplate):
         self.h_superheating_max_pressure=  PropsSI('H','P',self.params['max_pressure']*1E5,'S',s_superheating_max_pressure,'IF97::water') *1E-3
         if self.needed_pressure*1.02 > self.params['mains'][-1]:
             print('needed pressure larger than net pressure!')
-        self.main_pressure = min((x for x in self.params['mains'] if x >= self.needed_pressure*1.01), default=None) 
+        self.main_pressure = min((x for x in self.params['mains'] if x >= self.needed_pressure*1.1), default=None) 
 
         #for pres in self.params['mains']:
         #    self.main_dict[str(pres)]['pressure'] = pres
@@ -454,7 +454,7 @@ class steam_net(steam_net_base):
     parameters={
         'needed_temperature':link.parameter(
             name='needed_temperature',
-            default=180,
+            default=150,
             min=80,
             max=250,
             description='Needed temperature of the steam at the point of use in °C. Must be larger than 100 °C.',),
@@ -522,18 +522,27 @@ class steam_net(steam_net_base):
             description='Tespy subsystem which models the heat source provision. "conv" for conventional heating. "hp" for heat pump'
         )
     }
-    def __init__(self,  name, init_arg=None):
+    def __init__(self,  name, 
+                 heatsource = 'conv', 
+                 heatpump_path='',
+                 init_arg=None):
+        
         link.SimModel.__init__(self,  name, init_arg)
+        self.params['heat_source']= heatsource
+        self.params['heatpump_path']= heatpump_path
+
         template.ModelTemplate.__init__(self)
 
     def _create_network(self) -> None:
         super()._create_network()
         if self.params['heat_source']=='conv':
-            snwm.create_steam_net(self, snwm.conv_subsystem)
+            snwm.create_steam_net(self, snwm.conv_subsystem('steam boiler'))
+            self.chp=True
         elif self.params['heat_source']=='hp':
             snwm.create_steam_net(self, 
-                                  snwm.create_hp_subsystem(self.init_arg['heatpumps_path']),
+                                  snwm.create_hp_subsystem(self.params['heatpump_path']),
                                   chp=False)
+            self.chp=False
         
         
         #self._postprocess()
@@ -560,18 +569,26 @@ class steam_net(steam_net_base):
     def _change_mains(self, value):
         self.params['mains']=value
         self._init_mains()
-        self._calc_mains()
-        self.model.get_conn('c1_5').set_attr(p= self.main_pressure)
-        self.model.get_conn('c0_2').set_attr(p= self.main_pressure)
-        self.model.get_conn('c1_1').set_attr(p= self.needed_pressure)
-        self.model.get_conn('c1_6').set_attr(h= self.h_superheating_max_pressure)
+        self._change_temp(value)
         
     def _change_temp(self, value):
         self._calc_mains()
-        self.model.get_conn('c1_5').set_attr(p= self.main_pressure)
-        self.model.get_conn('c0_2').set_attr(p= self.main_pressure)
+        
         self.model.get_conn('c1_1').set_attr(p= self.needed_pressure)
-        self.model.get_conn('c1_6').set_attr(h= self.h_superheating_max_pressure)
+        self.model.get_conn('c1_5').set_attr(p= self.main_pressure)
+
+        c0_2= self.model.get_conn('c0_2')
+        if self.params['heat_source']=='conv':
+            if self.params['mains'].index(self.main_pressure)!=0:
+                c0_2.set_attr(p=self.params['mains'][
+                    self.params['mains'].index(self.main_pressure)-1])
+            else:
+                c0_2.set_attr(p=1)
+        elif self.params['heat_source']=='hp':
+            c0_2.set_attr(p=1.513)
+
+        if self.chp:
+            self.model.get_conn('c1_6').set_attr(h= self.h_superheating_max_pressure)
   
 
     def _change_heat(self, value):
@@ -652,11 +669,11 @@ class steam_net(steam_net_base):
                 self.solve_model_design(**params)
             except Exception as e:
                 print('did not solve')
-                logger.info(f'Calculation failed: {e}')
+                #logger.info(f'Calculation failed: {e}')
                 raise Exception(f'Calculation failed: {e}')
             else:
                 self.converged=True
-                self._result()
+                self._postprocess()
                 break
 
             i+=1
@@ -680,7 +697,7 @@ class steam_net(steam_net_base):
                 name='steam generation',
                 source= None,
                 target=self,
-                amount= lambda:self.model.get_conn("e_boil").E._val*self.model.units.ureg.second ,
+                amount= lambda:self.model.get_conn("e_boil2").E._val*self.model.units.ureg.second ,
                 type= link.technosphereTypes.input,
                 description= f'Steam generation for high pressure steam of 100 bar in large chemical plants. Without any distribution losses. If distribution losses are assumed in original dataset, correct them in this flow.',
                 default_name='heat production, natural gas, at industrial furnace >100kW'
@@ -698,7 +715,7 @@ class steam_net(steam_net_base):
                 name='electricity substitution',
                 source= self,
                 target= None,
-                amount= lambda:-self.model.get_conn("e_turb_grid").E._val*self.model.units.ureg.second ,
+                amount= lambda:-self.model.get_conn("e_turb_grid").E._val*self.model.units.ureg.second if self.chp else 0,
                 type= link.technosphereTypes.substitution,
                 default_name= 'market for electricity, medium'),
             'distributed steam':link.technosphere_edge(
@@ -749,7 +766,6 @@ class steam_net(steam_net_base):
         c_leak = self.model.get_conn('c_leak')
         c1_4 = self.model.get_conn('c1_4')
         c1_5 = self.model.get_conn('c1_5')
-        c1_6 = self.model.get_conn('c1_6')
         
         c1_1 = self.model.get_conn('c1_1')
         c0_2 = self.model.get_conn('c0_1')
@@ -757,37 +773,53 @@ class steam_net(steam_net_base):
         muw= self.model.get_conn('muw')
         muw2=self.model.get_conn('muw2')
         
-        boiler=self.model.get_conn("e_boil")
+        #boiler=self.model.get_conn("e_boil2")
         hex_heat_sink=self.model.get_conn("e_heat_sink")
         net_heat_sink=self.model.get_conn("e_nw_heat_sink")
-        turbine_grid = self.model.get_conn('e_turb_grid')
+        t_amb= self.model.units.ureg.Quantity(self.params['Tamb'],'degC').to('kelvin')
 
         leakage_loss= c_leak.m._val *(c_leak.h._val - muw2.h._val)
         pipe_loss = self.model.get_conn('e_pi_sink').E._val 
         #(abs(c1_4.m._val *c1_5.h._val - c1_4.m._val * c1_4.h._val )
         #            + abs(c0_2.m._val * c0_2.h._val - c0_3.m._val * c0_3.h._val)
         #)
-        self.elec_factor= abs((turbine_grid.E._val/hex_heat_sink.E._val).to_base_units().m )
-        self.boiler_factor = abs((boiler.E._val/hex_heat_sink.E._val).to_base_units().m)
+        if self.chp:
+            c1_6 = self.model.get_conn('c1_6')
+            turbine_grid = self.model.get_conn('e_turb_grid')
+            self.elec_factor= abs((turbine_grid.E._val/hex_heat_sink.E._val).to_base_units().m )
+            e_turb= abs(self.model.get_conn('e_turb').E._val)
+            self.E_bpt=((c1_5.h._val -c1_6.h._val) 
+                        - t_amb * (c1_5.s._val - c1_6.s._val))* c1_5.m._val
+        else:
+            e_turb= 0
+            self.E_bpt= 0
+        if self.params['heat_source']=='conv':
+            self.boiler_factor = abs((self.model.get_conn('e_boil2').E._val
+                                      /hex_heat_sink.E._val).to_base_units().m)
         self.diss_losses=(abs(pipe_loss)/
-                     (abs(boiler.E._val)-abs(self.model.get_conn('e_turb').E._val)+self.model.get_conn('e_pump').E._val)
+                     (abs(self.model.get_conn('e_boil2').E._val)
+                      -e_turb
+                      +self.model.get_conn('e_pump').E._val)
                      ).to_base_units().m
         self.leak_losses=(abs(leakage_loss)/
-                     (abs(boiler.E._val)-abs(self.model.get_conn('e_turb').E._val)+self.model.get_conn('e_pump').E._val)
+                     (abs(self.model.get_conn('e_boil2').E._val)
+                      -e_turb
+                      +self.model.get_conn('e_pump').E._val)
                      ).to_base_units().m
-        
+        # not valid for heatpump:
         self.losses=1-(
             (self.model.get_conn('e_heat_sink').E._val + 
              self.model.get_conn('e_nw_heat_sink').E._val
              )/
-            (self.model.get_conn('e_boil').E._val- self.model.get_conn('e_turb').E._val +self.model.get_conn('e_pump').E._val) 
+            (self.model.get_conn('e_boil2').E._val
+             -e_turb
+             +self.model.get_conn('e_pump').E._val) 
             )
         
         self.watertreatment_factor = abs(muw.m._val/hex_heat_sink.E._val).m
         #calc exergy reduction:
-        t_amb= self.model.units.ureg.Quantity(self.params['Tamb'],'degC').to('kelvin')
-        self.E_bpt=((c1_5.h._val -c1_6.h._val) 
-                    - t_amb * (c1_5.s._val - c1_6.s._val))* c1_5.m._val
+        
+        
 
         if self.cond_inj:
             cond_5 = self.model.get_conn('cond_5')
@@ -797,7 +829,9 @@ class steam_net(steam_net_base):
         else:
             self.E_hs= ((c0_2.h._val -c1_1.h._val) 
                         - t_amb * (c0_2.s._val - c1_1.s._val))* c1_1.m._val
-        self.E_nw_hs= ((self.model.get_conn('cnw2').h._val -self.model.get_conn('cnw1').h._val) 
-                        - t_amb * (self.model.get_conn('cnw2').s._val - self.model.get_conn('cnw1').s._val))* self.model.get_conn('cnw1').m._val
+        self.E_nw_hs= (((self.model.get_conn('cnw2').h._val -self.model.get_conn('cnw1').h._val) 
+                        - t_amb * (self.model.get_conn('cnw2').s._val 
+                                   - self.model.get_conn('cnw1').s._val))
+                        * self.model.get_conn('cnw1').m._val)
         
         self.alloc_ex = (self.E_bpt /(self.E_hs + self.E_bpt + self.E_nw_hs)).m

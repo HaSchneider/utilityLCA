@@ -8,17 +8,21 @@ from tespy.components import (
     Subsystem
 )
 from tespy.networks import Network
-
+from tespy.components import Subsystem
 from tespy.connections import Connection, Ref, PowerConnection, HeatConnection
 import logging
 
 #logger = logging.getLogger(__name__)
 def create_hp_subsystem(heatpumps_path):
 
-    hp_net= Network().from_json(heatpumps_path)
+    hp_net= Network.from_json(heatpumps_path)
     powerbus_index= hp_net.get_comp('Power Distribution').power_outl.index(hp_net.get_conn('E_cons_pump_in'))
-    hp_net.del_conns(hp_net.get_conn('C0'), hp_net.get_conn('C1'), hp_net.get_conn('C2'), hp_net.get_conn('C3'),
-                     hp_net.get_conn('E_cons_pump_in'), hp_net.get_conn('E_cons_pump_out'))
+    hp_net.del_conns(hp_net.get_conn('C0'), 
+                     hp_net.get_conn('C1'), 
+                     hp_net.get_conn('C2'), 
+                     hp_net.get_conn('C3'),
+                     hp_net.get_conn('E_cons_pump_in'), 
+                     hp_net.get_conn('E_cons_pump_out'))
     #comps
     motor_mvr = Motor('mvr_motor')
     mvr = Compressor('mvr')
@@ -29,48 +33,19 @@ def create_hp_subsystem(heatpumps_path):
     C2 = Connection(mvr, 'out1', cons_sink, 'in1', 'C2')
     hp_net.add_conns(C0, C1, C2)
     C1.set_attr(x=1)
-    pc_motor_mvr = PowerConnection(hp_net.get_comp('Power Distribution'), f'power_out{powerbus_index+1}',
-                motor_mvr, 'power_in', f'E_mvr_motor')
+    pc_motor_mvr = PowerConnection(
+        hp_net.get_comp('Power Distribution'), f'power_out{powerbus_index+1}',
+        motor_mvr, 'power_in', f'E_mvr_motor')
     pc_mvr = PowerConnection(motor_mvr, 'power_out', mvr, 'power',f'E_mvr')
     hp_net.add_conns(pc_mvr, pc_motor_mvr)
     
     mvr.set_attr(eta_s=0.8)
     motor_mvr.set_attr(eta=0.9)
 
-    hp_sub= hp_net.convert_to_subsystem('hp_sub', 
+    hp_sub= Subsystem.from_network('hp', hp_net, 
                                         ['Heat Source Back Flow',
                                          'Heat Source Feed Flow'])
-    '''
-    class hp_subsystem(Subsystem):
-        def __init__(self, label):
-            self.num_in = 1
-            self.num_out = 1
-            self.num_power_in = 1
-            super().__init__(label)
 
-        def create_network(self):
-            mvr=Compressor('mvr')
-            heat_source_feed = Source('Heat_source_feed')
-            heat_source_return = Sink('Heat_source_return')
-            hp= hp_sub('hp')
-            #powerbus= PowerBus('PowerBus', num_in=1, num_out=3)
-            
-            c_cold = Connection(self.inlet, "out1", hp.inlet, "in1", label="c_cold")
-            c_mvr= Connection(hp.outlet, "out1", mvr, "in1", label="c_mvr")
-            c_hot = Connection(mvr, "out1", self.outlet, "in1", label="c_hot")
-            
-            #pc_hp = PowerConnection(powerbus, "power_out1", hp.inlet, 'power_out1', label='hp_power')
-            #pc_mvr = PowerConnection(powerbus, "power_out2", mvr, 'power', label='mvr_power')
-            pc_total = PowerConnection(self.inlet, "power_in1", powerbus, 'power_in1', label='total_power')
-            
-            c_h_f = Connection(heat_source_feed, "out1", hp.inlet, "in2", label="c_heat_source_feed")
-            c_h_r= Connection(hp.outlet, "out2", heat_source_return, "in1", label="c_heat_source_return")
-             
-
-            self.add_conns(c_hot,c_mvr, c_cold,
-                           pc_hp, pc_mvr, pc_total,
-                           c_h_r, c_h_f)
-    '''
     return hp_sub
 class hp_subsystem(Subsystem):
     def __init__(self, label):
@@ -150,27 +125,24 @@ class conv_subsystem(Subsystem):
     def __init__(self, label):
         self.num_in = 1
         self.num_out = 1
-        self.num_power_in =1
+        self.num_heat_in =1
         super().__init__(label)
     def create_network(self):
-        hex=SimpleHeatExchanger('boiler', dissipative=False, pr=1 )
+        hex=SimpleHeatExchanger('boiler', pr=1 )
         c_cold = Connection(self.inlet, "out1", hex, "in1", label="c_cold")
         c_hot = Connection(hex, "out1", self.outlet, "in1", label="c_hot")
-        heat=PowerConnection(self.inlet, "power_out1", hex, 'heat', label= 'e_boil')
+        heat=HeatConnection(self.inlet, "heat_out1", hex, 'heat', label= 'e_boil_sub')
         self.add_conns(c_hot, c_cold, heat)
-
+       
 
 def create_steam_net(steam_lca, boiler_subsystem, chp= True):
-    
-    #logging.basicConfig(filename='steam_log.log', 
-    #                    filemode="w",
-    #                    level=logging.INFO)
 
+    
     steam_lca.model.iterinfo=True
     steam_lca.model.units.set_defaults(temperature='degC', 
-                                       pressure_difference='bar', enthalpy='kJ / kg')
+                                       pressure_difference='bar', enthalpy='kJ / kg', pressure='bar')
     # create components
-    boiler = boiler_subsystem('steam boiler')
+    boiler = boiler_subsystem
     steam_lca.model.add_subsystems(boiler)
     
     pipe_warm =  Pipe('steam pipe', dissipative=True)
@@ -179,7 +151,7 @@ def create_steam_net(steam_lca, boiler_subsystem, chp= True):
     hex_heat_sink = SimpleHeatExchanger('hex heat sink', dissipative=False)
     pipe_cold= Pipe('condensate pipe',dissipative=True)
     feed_pump= Pump('feedpump')
-    condensate_pump= Pump('condensate pump')
+    condensate_pump= Valve('condensate pump')
     cycl=CycleCloser('CycleCloser')
     
     steam_losses = Sink('steam losses')
@@ -208,8 +180,8 @@ def create_steam_net(steam_lca, boiler_subsystem, chp= True):
         c1_5 = Connection(bpt, 'out1', pipe_warm, 'in1', label='c1_5') #c03
         steam_lca.model.add_conns(c1_6, c1_5,)
     else:
-        c1_6 = Connection(boiler, 'out1', pipe_warm, 'in1', label='c1_5') #c03
-        steam_lca.model.add_conns(c1_6,)
+        c1_5 = Connection(boiler, 'out1', pipe_warm, 'in1', label='c1_5') #c03
+        steam_lca.model.add_conns(c1_5,)
 
     c1_4= Connection(pipe_warm, 'out1', steam_leak, 'in1', label='c1_4') #c022
     c1_3 = Connection(steam_leak, 'out1', diversion, 'in1',label='c1_3') #c023
@@ -242,19 +214,37 @@ def create_steam_net(steam_lca, boiler_subsystem, chp= True):
                               c0_11,
                               c0_1, c0_2, c0_3, c0_4, c0_5, c0_6, c0_7,
                               muw, wawa, muw2)
-    #set attributes:
-    boiler.set_attr(pr = 1, #power_connector_location="inlet"
-                    )
-    c1_6.set_attr(fluid={"water": 1}, 
-                    h= steam_lca.h_superheating_max_pressure)
+    #====set attributes:====
+    #boiler.set_attr(pr = 1, #power_connector_location="inlet"
+    #                )
+
+    c1_5.set_attr(fluid={"water": 1},
+                  p=steam_lca.main_pressure
+                     #h0=steam_lca.h_superheating_max_pressure,
+                     )
     if chp:
         bpt.set_attr(eta_s = 0.85, )
-        c1_5.set_attr(p=steam_lca.main_pressure, 
-                 h0=steam_lca.h_superheating_max_pressure,)
-        c0_6.set_attr(p=steam_lca.parameters['max_pressure'].default, 
-                h0=steam_lca.h_superheating_max_pressure,)
+        c1_6.set_attr( 
+                    h= steam_lca.h_superheating_max_pressure
+                 )
+        c0_6.set_attr(p=steam_lca.parameters['max_pressure'].default
+                #h0=steam_lca.h_superheating_max_pressure,
+                )
     else:
-        c0_6.set_attr(p=steam_lca.main_pressure)
+
+        if steam_lca.params['heat_source']=='conv':
+            c0_6.set_attr(p=steam_lca.main_pressure
+                          )
+        elif steam_lca.params['heat_source']=='hp':
+            c0_6.set_attr(
+                p=Ref(c0_2,1,0.5)
+                #p=2.0
+                )
+            
+
+    #if steam_lca.params['heat_source']=='hp':
+         
+            
     pipe_warm.set_attr(pr=0.95, 
         Tamb = steam_lca.parameters['Tamb'].default, 
         L=steam_lca.parameters['pipe_length'].default, 
@@ -274,12 +264,20 @@ def create_steam_net(steam_lca, boiler_subsystem, chp= True):
                            Q=-steam_lca.parameters['heat'].default, 
                            #power_connector_location="outlet"
                            )
-                           #power_connector_location="outlet"
-                           )
-    
-    
-    c0_2.set_attr(p=steam_lca.main_pressure 
+
+    if steam_lca.params['heat_source']=='conv':
+        if steam_lca.params['mains'].index(steam_lca.main_pressure)!=0:
+            c0_2.set_attr(p=steam_lca.params['mains'][
+                steam_lca.params['mains'].index(steam_lca.main_pressure)-1
+                ] 
                 )
+        else:
+            c0_2.set_attr(p=1)
+                        
+    elif steam_lca.params['heat_source']=='hp':
+        c0_2.set_attr(p=1.5013
+                      )
+
     pipe_cold.set_attr(pr=0.95, 
         Tamb = steam_lca.parameters['Tamb'].default,
         L=steam_lca.parameters['pipe_length'].default, D='var',  ks=4.57e-5,
@@ -292,44 +290,50 @@ def create_steam_net(steam_lca, boiler_subsystem, chp= True):
         environment_media = steam_lca.parameters['environment_media'].default
             )
 
-    c0_5.set_attr(p0=steam_lca.needed_pressure,)
+    #c0_5.set_attr(p0=steam_lca.needed_pressure,)
 
-    muw.set_attr(m=Ref(c1_6, steam_lca.parameters['makeup_factor'].default, 0), 
+    muw.set_attr(m=Ref(c1_5, steam_lca.parameters['makeup_factor'].default, 0), 
                     T=steam_lca.parameters['Tamb'].default,
                     fluid={"water": 1},  
-                    p0=1.013)
+                    p0=1.013#*1E5
+                    )
     muw2.set_attr(m=Ref(c_leak, 1, 0), 
                     T=steam_lca.parameters['Tamb'].default,
                     fluid={"water": 1}, 
-                    p0=1.013)
+                    p0=1.013#*1E5
+                    )
     
-    wawa.set_attr(m=Ref(c1_6, steam_lca.parameters['makeup_factor'].default, 0))
-    feed_pump.set_attr(eta_s =0.95)
-    condensate_pump.set_attr(eta_s=0.95)
+    wawa.set_attr(m=Ref(c1_5, steam_lca.parameters['makeup_factor'].default, 0))
+    feed_pump.set_attr(eta_s =1)
+    #condensate_pump.set_attr(eta_s=0.95)
     network_heat_sink.set_attr(pr=1, 
-                               Q=-(steam_lca.parameters['heat_capacity_pipe_network'].default-steam_lca.parameters['heat'].default),
-                               #power_connector_location="outlet",
-                               #power_connector_location="outlet",
+                               Q=-(steam_lca.parameters['heat_capacity_pipe_network'].default
+                                   -steam_lca.parameters['heat'].default),
                                )
-    cnw2.set_attr(x=0)
-    c0_1.set_attr(x=0)
+    cnw3.set_attr(x=0)
+    c0_11.set_attr(x=0)
     
     # create power connections:
     
     fuel_bus = PowerSource('boiler energysource')
-    #if steam_lca.paras['heat_source']=='conv':
-    #    e_boil = PowerConnection(fuel_bus, 'power', boiler.inlet, 'heat_in1', label= 'e_boil2')
-    #elif steam_lca.paras['heat_source']=='hp':
-    e_boil = PowerConnection(fuel_bus, 'power', boiler.inlet, 'power_in1', label= 'e_boil2')
+    boiler_heat_bus = HeatSource('boiler heatsource')
+    if steam_lca.params['heat_source']=='conv':
+        e_boil = HeatConnection(boiler_heat_bus, 'heat', boiler.inlet, 'heat_in1', label= 'e_boil2')
+        steam_lca.model.add_conns(e_boil)
+    elif steam_lca.params['heat_source']=='hp':
+        e_boil = PowerConnection(fuel_bus, 'power', boiler.inlet, 'power_in1', label= 'e_boil2')
+        steam_lca.model.add_conns(e_boil)
     
-    turbine_gen = Generator('turbines')
-    turbine_gen.set_attr(eta= 0.9)
-    turbine_grid = PowerSink('grid')
+
     if chp:
+        turbine_gen = Generator('turbines')
+        turbine_gen.set_attr(eta= 0.9)
+        turbine_grid = PowerSink('grid')
         e_turb = PowerConnection(bpt, 'power', turbine_gen, 'power_in', label='e_turb')
         steam_lca.model.add_conns(e_turb)
-    e_turb_grid =PowerConnection(turbine_gen, 'power_out', turbine_grid, 'power', 
+        e_turb_grid =PowerConnection(turbine_gen, 'power_out', turbine_grid, 'power', 
                                 label='e_turb_grid')
+        steam_lca.model.add_conns(e_turb_grid)
 
     pipe_diss_sink =HeatSink('pipe dissipative losses sink')
     pipe_diss_bus = HeatBus('pipe dissipative losses bus', num_in =2, num_out=1)
@@ -347,12 +351,10 @@ def create_steam_net(steam_lca, boiler_subsystem, chp= True):
     pump_psource = PowerSource('feedpump powersource')
     e_pump = PowerConnection(pump_psource, 'power', feed_pump, 'power', label='e_pump')
 
-
-    steam_lca.model.add_conns(e_boil,
-                            e_turb_grid,
-                           e_pi_c, e_pi_h, e_pi_sink,
-                           e_heat_sink, e_nw_heat_sink,
-                           e_pump
+    steam_lca.model.add_conns(
+        e_pi_c, e_pi_h, e_pi_sink,
+        e_heat_sink, e_nw_heat_sink,
+        e_pump
     )
     #logger.info('Start first solve')
     steam_lca.model.solve('design')
@@ -362,7 +364,7 @@ def create_steam_net(steam_lca, boiler_subsystem, chp= True):
     muw.set_attr(T=None)
     muw.set_attr(T=Ref(c0_3, 1, -20))
     #logger.info('Start second solve')
-    steam_lca.model.solve('design')
+    #steam_lca.model.solve('design')
 
     #3. Run: implement condensate injection:
    # if superheated inject condensate:
