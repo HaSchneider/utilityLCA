@@ -1,11 +1,8 @@
-
-from tespy.networks import Network
 from tespy.connections import  Ref
 from tespy.models import  template
 
 from simodin import interface as link
-from . import steam_network_model as snwm
-from . import heat_pump_network_model_2 as hpm
+from . import create_steam_model as snwm
 
 from CoolProp.CoolProp import PropsSI
 import numpy as np 
@@ -196,7 +193,7 @@ class steam_net_base(link.SimModel, template.ModelTemplate):
 
 class steam_net(steam_net_base):
     """
-    Class to implement a steam distribution model for conventional steam networks. The model is based on the
+    Class to implement a steam distribution model for process heat by steam. The model is based on the
     `SiModIn <https://github.com/HaSchneider/SiModIn>`_ model to calculate the temperature dependent impact of process heat from steam. 
     The model considers physical, dissipative and pressure losses in the steam network.
     
@@ -204,6 +201,10 @@ class steam_net(steam_net_base):
         ----------
         Name : str
             Name of the model.
+        heatsource: str
+            'conv' for conventional fossil based heat generation or 'hp' for heat pump based heat generation with mechanical vapor recompression.
+        heatpump_path: str
+            Path to heatpump model as TESPy json export. Should be based on heatpump model from https://github.com/jfreissmann/heatpumps. 
         **parameter
             Parameters of the model. See parameters section for details.
     
