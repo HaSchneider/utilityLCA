@@ -5,193 +5,9 @@ from simodin import interface as link
 from . import create_steam_model as snwm
 
 from CoolProp.CoolProp import PropsSI
-import numpy as np 
-import matplotlib.pyplot as plt
-from fluprodia import FluidPropertyDiagram
+  
 
-
-import copy
-import logging
-
-#logger = logging.getLogger(__name__)
-class steam_net_base(link.SimModel, template.ModelTemplate):
-    
-    def __init__(self, name, **init_arg):
-        self.init_arg = init_arg
-        link.SimModel.__init__(self,name, init_arg)
-        self.params['heat_source']='hp'
-        template.ModelTemplate.__init__(self)
-    
-    def _create_network(self) -> None:
-        super()._create_network()
-        #self.params= default_params | self.params | params
-        self.main_pressure = 0
-        self.h_superheating_max_pressure = 0
-        
-        # result properties:
-        self.elec_factor =0
-        self.boiler_factor =0
-        self.losses=0
-        self.alloc_ex=0
-        self.E_bpt =0
-        self.E_hs=0
-
-        self.converged = False
-        self._init_mains()
-        
-        self._validate_params()
-        self._calc_mains()
-        self.cond_inj = False
-        self.trap=False # droplet seperator if steam is not saturated at point of use (due to losses in pipe)
-        
-        self.desuperheat_steam=False
-
-
-
-        #mains_sorted = sorted(self.params['mains'])
-        #if self.main_pressure in mains_sorted:
-        #    idx = mains_sorted.index(self.main_pressure)
-        #    next_main = mains_sorted[idx - 1] if idx - 1 >= 0 else 1.013
-        #else:
-        #    raise ValueError("Main pressure not found in mains list")
-        
-        self.model= self.nw
-    
-
-    def init_model(self, init_arg=None):
-        """
-        Abstract simodin class. Initialising of the model.
-        
-        """
-        
-        self._create_network()
-        
-    
-    def _validate_params(self):        
-        if self.params['max_pressure'] < self.params['mains'][-1]:
-            raise ValueError('max pressure must be larger than the highest main pressure')
-        if self.params['heat_capacity_pipe_network'] <self.params['heat']:
-            raise ValueError('Heat capacity of the pipe network must be larger than the transferred heat at the heat exchanger')
-    
-    
-    def _calc_pressure(self, temp=None):
-        if temp==None:
-            temp=self.params['needed_temperature']+273
-        else:
-            temp= temp+273
-        self.needed_pressure= PropsSI('P','Q',0,'T',temp,'IF97::water')*1E-5
-        
-    def _init_mains(self):
-        self.params['mains'].sort()
-        self.main_dict={}
-        for pres in self.params['mains']:
-            self.main_dict[str(pres)] = {}
-            self.main_dict[str(pres)]['pressure'] = pres
-            self.main_dict[str(pres)]['temperature'] =PropsSI('T', 'P', pres*1E5, 'Q', 1, 'IF97::water') - 273.15 # in °C
-            self.main_dict[str(pres)]['impact'] = None
-    def _calc_mains(self, temp=None): 
-        self.params['mains'].sort()
-        self._calc_pressure(temp)
-        s_superheating_max_pressure=  PropsSI('S','P',self.params['mains'][0]*1E5,'Q',1,'IF97::water') 
-        self.h_superheating_max_pressure=  PropsSI('H','P',self.params['max_pressure']*1E5,'S',s_superheating_max_pressure,'IF97::water') *1E-3
-        if self.needed_pressure*1.02 > self.params['mains'][-1]:
-            print('needed pressure larger than net pressure!')
-        self.main_pressure = min((x for x in self.params['mains'] if x >= self.needed_pressure*1.1), default=None) 
-
-        #for pres in self.params['mains']:
-        #    self.main_dict[str(pres)]['pressure'] = pres
-        #    self.main_dict[str(pres)]['temperature'] =PropsSI('T', 'P', pres*1E5, 'Q', 1, 'IF97::water') - 273.15 # in °C
-
-    def plot_Ts(self):
-        # Initial Setup
-        diagram = FluidPropertyDiagram('water')
-        diagram.set_unit_system(T='°C', p='bar', h='kJ/kg')
-
-        # Storing the model result in the dictionary
-        result_dict = {}
-        result_dict.update(
-            {cp.label: cp.get_plotting_data()[1] for cp in self.model.comps['object']
-            if cp.get_plotting_data() is not None})
-
-        # Iterate over the results obtained from TESPy simulation
-        for key, data in result_dict.items():
-            # Calculate individual isolines for T-s diagram
-            result_dict[key]['datapoints'] = diagram.calc_individual_isoline(**data)
-
-        # Create a figure and axis for plotting T-s diagram
-        fig, ax = plt.subplots(1, figsize=(20, 10))
-        isolines = {
-            'Q': np.linspace(0, 1, 2),
-            'p': np.array([1, 2, 5, 10, 20, 50, 100, 300]),
-            'vol': np.array([]),
-            'h': np.arange(500, 3501, 500)
-        }
-
-        # Set isolines for T-s diagram
-        diagram.set_isolines(**isolines)
-        diagram.calc_isolines()
-
-        # Draw isolines on the T-s diagram
-        diagram.draw_isolines(fig, ax, 'Ts', x_min=1000, x_max=8000, y_min=20, y_max=600)
-
-        # Adjust the font size of the isoline labels
-        for text in ax.texts:
-            text.set_fontsize(10)
-
-        # Plot T-s curves for each component
-        for key in result_dict.keys():
-            datapoints = result_dict[key]['datapoints']
-            _ = ax.plot(datapoints['s'], datapoints['T'], color='#ff0000', linewidth=2)
-            _ = ax.scatter(datapoints['s'][0], datapoints['T'][0], color='#ff0000')
-
-        # Set labels and title for the T-s diagram
-        ax.set_xlabel('Entropy, s in J/kgK', fontsize=16)
-        ax.set_ylabel('Temperature, T in °C', fontsize=16)
-        ax.set_title('T-s Diagram of steam net', fontsize=20)
-
-        # Set font size for the x-axis and y-axis ticks
-        ax.tick_params(axis='x', labelsize=12)
-        ax.tick_params(axis='y', labelsize=12)
-        plt.tight_layout()
-        return fig
-    
-    def calculate_model(self, **params):
-        """
-        Method to calculate the steam net model.
-        """
-
-        self._validate_params()
-        self._calc_mains()
-        mains_sorted = sorted(self.params['mains'])
-        if self.main_pressure in mains_sorted:
-            idx = mains_sorted.index(self.main_pressure)
-            next_main = mains_sorted[idx - 1] if idx - 1 >= 0 else 1.013
-        else:
-            raise ValueError("Main pressure not found in mains list")
-        i=0
-        while i < 3:
-            try:
-                #snwm.create_steam_net(self)
-                print('changed params:', params)
-                self.solve_model_design(**params)
-            except Exception as e:
-                print('did not solve')
-                #
-                # logger.info(f'Calculation failed: {e}')
-                raise Exception(f'Calculation failed: {e}')
-            else:
-                self.converged=True
-                #self._postprocess()
-                break
-
-            i+=1
-        else:
-            raise Exception('Steam net calculation failed. Check the parameter and try again!')
-        
-        #self.define_flows()
-
-
-class steam_net(steam_net_base):
+class steam_net(link.SimModel, template.ModelTemplate):
     """
     Class to implement a steam distribution model for process heat by steam. The model is based on the
     `SiModIn <https://github.com/HaSchneider/SiModIn>`_ model to calculate the temperature dependent impact of process heat from steam. 
@@ -298,16 +114,59 @@ class steam_net(steam_net_base):
     def __init__(self,  name, 
                  heatsource = 'conv', 
                  heatpump_path='',
-                 init_arg=None):
-        
-        link.SimModel.__init__(self,  name, init_arg)
+                 ):
+        """
+        Initialize the `steam_net` instance.
+
+        Parameters
+        ----------
+        name : str
+            Model name.
+        heatsource : str, optional
+            Type of heat source: 'conv' (conventional boiler) or 'hp' (heat pump).
+        heatpump_path : str, optional
+            Path to JSON export of heat pump model.
+        """
+        link.SimModel.__init__(self,  name)
         self.params['heat_source']= heatsource
         self.params['heatpump_path']= heatpump_path
 
         template.ModelTemplate.__init__(self)
 
     def _create_network(self) -> None:
-        super()._create_network()
+        """
+        Create the full TESPy network, including heat source subsystem.
+
+        Based on `self.params['heat_source']`, either a conventional boiler or a heat pump
+        subsystem is added to the steam network via `snwm.create_steam_net`.
+
+        """
+        super()._create_network() # from modeltemplate
+
+        self.main_pressure = 0
+        self.h_superheating_max_pressure = 0
+        
+        # result properties:
+        self.elec_factor =0
+        self.boiler_factor =0
+        self.losses=0
+        self.alloc_ex=0
+        self.E_bpt =0
+        self.E_hs=0
+
+        self.converged = False
+        self._init_mains()
+        
+        self._validate_params()
+        self._calc_mains()
+        self.cond_inj = False
+        self.trap=False # droplet seperator if steam is not saturated at point of use (due to losses in pipe)
+        
+        self.desuperheat_steam=False
+
+        
+        self.model= self.nw
+
         if self.params['heat_source']=='conv':
             snwm.create_steam_net(self, snwm.conv_subsystem('steam boiler'))
             self.chp=True
@@ -322,7 +181,16 @@ class steam_net(steam_net_base):
         self.initialized = True
         
     def _parameter_lookup(self) -> dict:
-        #return super()._parameter_lookup()
+        """
+        Return mapping of parameter names to handler functions.
+        Needed to make the model compatible to model template of tespy.
+        Used by `simodin` to update model parameters dynamically.
+
+        Returns
+        -------
+        dict
+            Mapping of parameter names to either setter functions or direct component/connection updates.
+        """
 
         return {
             "Tamb": {'set':self._change_Tamb},
@@ -345,6 +213,20 @@ class steam_net(steam_net_base):
         self._change_temp(value)
         
     def _change_temp(self, value):
+        """
+        Update steam temperature (and corresponding pressure/enthalpy settings).
+
+        Adjusts:
+        - Inlet pressure (`c1_1`) to required saturation pressure.
+        - Main pressure (`c1_5`) to selected main level.
+        - Upstream pressure (`c0_2`) depending on heat source type.
+        - Superheated enthalpy (`c1_6`) for CHP case.
+
+        Parameters
+        ----------
+        value : float or list
+            Needed temperature (°C) or list of mains (used for _change_mains dispatch).
+        """
         self._calc_mains()
         
         self.model.get_conn('c1_1').set_attr(p= self.needed_pressure)
@@ -365,6 +247,14 @@ class steam_net(steam_net_base):
   
 
     def _change_heat(self, value):
+        """
+        Update heat loads at heat sink and network condensation components.
+
+        Parameters
+        ----------
+        value : float
+            Required heat at process in W.
+        """
         self.model.get_comp('network condensation').set_attr(
             Q= -(self.params['heat_capacity_pipe_network']-value) )
         self.model.get_comp('hex heat sink').set_attr(Q=-value)
@@ -415,12 +305,70 @@ class steam_net(steam_net_base):
         self._create_network()
         
     
-    def _validate_params(self):        
+    def _validate_params(self):
+        """
+        Validate model parameters for consistency.
+
+        Ensures:
+        - `max_pressure` is larger than the highest main pressure.
+        - `heat_capacity_pipe_network` is greater than or equal to the required `heat`.
+
+        """    
         if self.params['max_pressure'] < self.params['mains'][-1]:
             raise ValueError('max pressure must be larger than the highest main pressure')
         if self.params['heat_capacity_pipe_network'] <self.params['heat']:
             raise ValueError('Heat capacity of the pipe network must be larger than the transferred heat at the heat exchanger')
-    
+    def _calc_pressure(self, temp=None):
+        """
+        Calculate the saturation pressure for a given temperature using CoolProp.
+
+        Parameters
+        ----------
+        temp : float, optional
+            Temperature in °C. If None, uses `self.params['needed_temperature']`.
+        """
+        if temp==None:
+            temp=self.params['needed_temperature']+273
+        else:
+            temp= temp+273
+        self.needed_pressure= PropsSI('P','Q',0,'T',temp,'IF97::water')*1E-5
+        
+    def _init_mains(self):
+        """
+        Initialize the dictionary of main pressure levels with their corresponding saturation temperatures.
+
+        Populates `self.main_dict` with pressure keys (as strings), pressure values, and
+        saturation temperatures (in °C) for each main pressure level.
+        """
+        self.params['mains'].sort()
+        self.main_dict={}
+        for pres in self.params['mains']:
+            self.main_dict[str(pres)] = {}
+            self.main_dict[str(pres)]['pressure'] = pres
+            self.main_dict[str(pres)]['temperature'] =PropsSI('T', 'P', pres*1E5, 'Q', 1, 'IF97::water') - 273.15 # in °C
+            self.main_dict[str(pres)]['impact'] = None
+    def _calc_mains(self, temp=None): 
+        """
+        Compute required pressure and determine main pressure level for steam distribution.
+
+        Determines:
+        - Saturation pressure for needed temperature (`self.needed_pressure`)
+        - Enthalpy at maximum pressure corresponding to max pressure's entropy at Q=1 (`self.h_superheating_max_pressure`)
+        - Selected main pressure level (`self.main_pressure`), at least 10% above `self.needed_pressure`.
+
+        Parameters
+        ----------
+        temp : float, optional
+            Temperature in °C to compute needed pressure. Uses `needed_temperature` if None.
+        """
+        self.params['mains'].sort()
+        self._calc_pressure(temp)
+        s_superheating_max_pressure=  PropsSI('S','P',self.params['mains'][0]*1E5,'Q',1,'IF97::water') 
+        self.h_superheating_max_pressure=  PropsSI('H','P',self.params['max_pressure']*1E5,'S',s_superheating_max_pressure,'IF97::water') *1E-3
+        if self.needed_pressure*1.02 > self.params['mains'][-1]:
+            print('needed pressure larger than net pressure!')
+        self.main_pressure = min((x for x in self.params['mains'] if x >= self.needed_pressure*1.1), default=None) 
+
     def calculate_model(self, **params):
         """
         Method to calculate the steam net model.
@@ -527,13 +475,7 @@ class steam_net(steam_net_base):
                      self.model.units.ureg.second).to('tonne').m *self.model.units.ureg('m^3'),
             default_code= '51254820-3456-4373-b7b4-056cf7b16e01'
             )}
-    def _validate_params(self):        
-        if self.params['max_pressure'] < self.params['mains'][-1]:
-            raise ValueError('max pressure must be larger than the highest main pressure')
-        if self.params['heat_capacity_pipe_network'] <self.params['heat']:
-            raise ValueError('Heat capacity of the pipe network must be larger than the transferred heat at the heat exchanger')
-    
-    
+
 
     def _postprocess(self):
         c_leak = self.model.get_conn('c_leak')
