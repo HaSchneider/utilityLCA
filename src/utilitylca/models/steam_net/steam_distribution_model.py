@@ -114,6 +114,7 @@ class steam_net(link.SimModel, template.ModelTemplate):
     def __init__(self,  name, 
                  heatsource = 'conv', 
                  heatpump_path='',
+                 chp=True
                  ):
         """
         Initialize the `steam_net` instance.
@@ -130,7 +131,7 @@ class steam_net(link.SimModel, template.ModelTemplate):
         link.SimModel.__init__(self,  name)
         self.params['heat_source']= heatsource
         self.params['heatpump_path']= heatpump_path
-
+        self.chp= chp
         template.ModelTemplate.__init__(self)
 
     def _create_network(self) -> None:
@@ -168,8 +169,8 @@ class steam_net(link.SimModel, template.ModelTemplate):
         self.model= self.nw
 
         if self.params['heat_source']=='conv':
-            snwm.create_steam_net(self, snwm.conv_subsystem('steam boiler'))
-            self.chp=True
+            snwm.create_steam_net(self, snwm.conv_subsystem('steam boiler'), chp=self.chp)
+            
         elif self.params['heat_source']=='hp':
             snwm.create_steam_net(self, 
                                   snwm.create_hp_subsystem(self.params['heatpump_path']),

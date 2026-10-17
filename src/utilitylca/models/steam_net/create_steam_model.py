@@ -12,6 +12,8 @@ from tespy.components import Subsystem
 from tespy.connections import Connection, Ref, PowerConnection, HeatConnection
 import logging
 
+from CoolProp.CoolProp import PropsSI
+
 #logger = logging.getLogger(__name__)
 def create_hp_subsystem(heatpumps_path):
 
@@ -233,16 +235,16 @@ def create_steam_net(steam_lca, boiler_subsystem, chp= True):
     else:
 
         if steam_lca.params['heat_source']=='conv':
-            c0_6.set_attr(p=steam_lca.main_pressure
-                          )
+            c1_5.set_attr( 
+                T= PropsSI('T','Q',1,'P',steam_lca.main_pressure*1E5,'IF97::water')+15+273
+                )
+            #c0_6.set_attr(p=steam_lca.main_pressure
+            #              )
         elif steam_lca.params['heat_source']=='hp':
             c0_6.set_attr(
                 p=Ref(c0_2,1,0.5)
                 #p=2.0
                 )
-            
-
-    #if steam_lca.params['heat_source']=='hp':
          
             
     pipe_warm.set_attr(pr=0.95, 
