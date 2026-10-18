@@ -72,8 +72,10 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
+    'sphinxcontrib.bibtex',
     #"sphinx_design",
 ]
+bibtex_default_style = 'unsrt'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -81,6 +83,7 @@ templates_path = ["_templates"]
 # The suffix of source filenames.
 source_suffix = ".rst"
 
+bibtex_bibfiles = ['references.bib']
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
 
@@ -129,7 +132,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".venv"]
 # If true, '()' will be appended to :func: etc. cross-reference text.
 # add_function_parentheses = True
 
-# If true, the current module name will be prepended to all description
+# If true, the current module name wilel be prepended to all description
 # unit titles (such as .. function::).
 # add_module_names = True
 
@@ -285,3 +288,4 @@ intersphinx_mapping = {
 }
 
 print(f"loading configurations for {project} {version} ...", file=sys.stderr)
+

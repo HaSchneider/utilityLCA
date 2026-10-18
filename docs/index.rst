@@ -2,7 +2,8 @@
 utilityLCA
 ==========
 
-UtilityLCA contains a `TESPy <https://tespy.readthedocs.io/en/main/>`_ network wrapped in a `SiModIn <https://github.com/HaSchneider/SiModIn>`_ model for simulating the impact of distribution of steam as process heat transfer medium in chemical industry.
+UtilityLCA contains a `TESPy <https://tespy.readthedocs.io/en/main/>`_ :cite:`witte_thermal_2026` network wrapped in a `SiModIn <https://github.com/HaSchneider/SiModIn>`_ :cite:`schneider_simodin_2026` model for simulating the impact of distribution of steam as process heat transfer medium in chemical industry.
+
 
 ..  figure:: /_static/steam_net.svg
     :alt: Steam distribution topology
@@ -13,7 +14,14 @@ UtilityLCA can support more accurate LCA of processes by allowing:
 * Use of different multifunctionality approaches
 * Adjusting of site specific parameters
 * Simple integration in LCA workflow by using `SiModIn <https://github.com/HaSchneider/SiModIn>`_
+* Consider heat pumps as prospective steam distribution technologies
 
+Publication
+===========
+
+A paper about the model is published in Journal of Industrial Ecology :cite:`schneider_generic_2026`:
+
+Schneider, H., Scholl, S. & Paschetag, M. Generic model for determining the environmental impact of process steam supply. J. Ind. Ecol. 30, 2849–2862 (2026). https://doi.org/10.1007/s44498-026-00180-3
 
 
 Contents
@@ -27,7 +35,7 @@ Contents
    License <license>
    Authors <authors>
    Module Reference <api/modules>
-
+   references <references>
 
 Indices and tables
 ==================

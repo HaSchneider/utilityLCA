@@ -22,7 +22,7 @@ Example
 
 To get started with utilityLCA, you need to create a steam distribution class. 
 Passing a name is mandatory, while the other parameters have default values. 
-The following code shows how to create a steam distribution model with custom parameters. 
+The following code shows how to create a steam distribution model. 
 
 .. code-block:: python
 
@@ -31,23 +31,14 @@ The following code shows how to create a steam distribution model with custom pa
 
     my_model= sdm.steam_net('steam net')
 
-The full list of parameters and their default values are shown in :ref:`features`.
-The parameters can also be changed later explicitly by:
-
-
-.. code-block:: python
-
-    my_model.params['needed_temperature']= 200
-
-
-Or be passed to the calculate_model method. 
-In init_model method, the model is initialized and the parameters are used to set up the model structure.
-In calculate_model method, the model is calculated and the parameters are used in the calculation.
+After initializing, the parameters can be changed by passing them to the calculate_model method. 
+In calculate_model method, the model is calculated and the parameters are used in the calculation:
 
 .. code-block:: python
 
     my_model.calculate_model(needed_temperature= 150)
 
+The full list of parameters and their default values are shown in :ref:`features`.
 
 To link LCA datasets to the model, the technosphere flows needs to be generated and the SiModIn interface class created:
 
