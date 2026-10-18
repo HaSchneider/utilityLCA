@@ -32,3 +32,24 @@ dependencies = [
     "numpy",
 ]
 dynamic = ["version"]
+
+[env.docs]
+description = "build documentation"
+deps = ["sphinx>=7"]
+commands = [
+    ["sphinx-build", "-d", "{env_tmp_dir}/doctree", "docs", "{work_dir}/docs_out", "--color", "-b", "html"],
+    ["python", "-c", "print(f'documentation available under file://{work_dir}/docs_out/index.html')"],
+]
+
+[tool.tox]
+envlist = ["docs"]
+
+[tool.tox.env.doc]
+deps = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    "-e .",
+]
+commands = [
+    "sphinx-build -b html source build/html",
+]

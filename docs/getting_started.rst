@@ -22,51 +22,23 @@ Example
 
 To get started with utilityLCA, you need to create a steam distribution class. 
 Passing a name is mandatory, while the other parameters have default values. 
-The following code shows how to create a steam distribution model with custom parameters. 
+The following code shows how to create a steam distribution model. 
 
 .. code-block:: python
 
-    from utilitylca import steam_distribution_conventional as sdc
+    from utilitylca import steam_distribution_model as sdm
     from simodin import interface as link
 
-    my_model= sdc.steam_net('steam net', needed_temperature= 180, wind_velocity=3, heat=1E6 ,
-                        heat_capacity_pipe_network = 20E6,
-                        insulation_thickness=0.1
-                        )
+    my_model= sdm.steam_net('steam net')
 
-The full list of parameters and their default values are:
-
-==========================  ======  =============
-Parameter                   Unit    Default value
-==========================  ======  =============
-Makeup factor               %       5	
-Ambient temperature         °C      20	
-Leakage factor              %       7.5	
-Steam generation pressure   bara    130	
-Pipeline capacity           MW      20	
-Process heat demand         MW      1	
-Wind velocity               m/s     3  	
-Insulation thickness        m       0.1	
-Environment                         `Air`	
-Pipe length                 m       1000	
-==========================  ======  =============
-
-The parameters can also be changed later explicitly by:
-
+After initializing, the parameters can be changed by passing them to the calculate_model method. 
+In calculate_model method, the model is calculated and the parameters are used in the calculation:
 
 .. code-block:: python
 
-    my_model.params['needed_temperature']= 200
+    my_model.calculate_model(needed_temperature= 150)
 
-
-Or be passed to the init_model or calculate_model method. 
-In init_model method, the model is initialized and the parameters are used to set up the model structure.
-In calculate_model method, the model is calculated and the parameters are used in the calculation.
-
-.. code-block:: python
-
-    my_model.init_model(wind_velocity=2)
-    my_model.calculate_model()
+The full list of parameters and their default values are shown in :ref:`features`.
 
 To link LCA datasets to the model, the technosphere flows needs to be generated and the SiModIn interface class created:
 

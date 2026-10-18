@@ -1,0 +1,553 @@
+from tespy.connections import  Ref
+from tespy.models import  template
+
+from simodin import interface as link
+from . import create_steam_model as snwm
+
+from CoolProp.CoolProp import PropsSI
+  
+
+class steam_net(link.SimModel, template.ModelTemplate):
+    """
+    Class to implement a steam distribution model for process heat by steam. The model is based on the
+    `SiModIn <https://github.com/HaSchneider/SiModIn>`_ model to calculate the temperature dependent impact of process heat from steam. 
+    The model considers physical, dissipative and pressure losses in the steam network.
+    
+    Parameters
+        ----------
+        Name : str
+            Name of the model.
+        heatsource: str
+            'conv' for conventional fossil based heat generation or 'hp' for heat pump based heat generation with mechanical vapor recompression.
+        heatpump_path: str
+            Path to heatpump model as TESPy json export. Should be based on heatpump model from https://github.com/jfreissmann/heatpumps. 
+        **parameter
+            Parameters of the model. See parameters section for details.
+    
+    """
+
+    reference={ 
+        'type': 'misc',
+        'key': '',
+        'author' :'Hannes Schneider',
+        'title'  : 'Generic model for determining the environmental impact of process steam supply',
+        'location':'',
+        'year': '2025',
+        'doi': 'https://doi.org/10.1007/s44498-026-00180-3',
+        'url': 'https://link.springer.com/article/10.1007/s44498-026-00180-3?utm_source=rct_congratemailt&utm_medium=email&utm_campaign=oa_20260926&utm_content=10.1007/s44498-026-00180-3'
+        }
+    description='This SiModIn model can be used to calculate the temperature dependent impact of process heat from steam. ' \
+    'The model considers physical, dissipative and pressure losses in the steam network.' \
+    '' \
+    
+    parameters={
+        'needed_temperature':link.parameter(
+            name='needed_temperature',
+            default=150,
+            min=80,
+            max=250,
+            description='Needed temperature of the steam at the point of use in °C. Must be larger than 100 °C.',),
+        'makeup_factor':link.parameter(
+            name='makeup_factor',
+            default=0.05,
+            min=0,
+            max=1,
+            description='Factor of the amount of make up water. Must be between 0 and 1.',),
+        'leakage_factor':link.parameter(
+            name='leakage_factor',
+            default=0.075,
+            min=0,
+            max=1,
+            description='Factor of the amount of steam leakage. Must be between 0 and 1.',
+            reference= 'https://invenoeng.com/steam-system-thermal-cycle-efficiency-a-important-benchmark-in-the-steam-system/'),
+        'Tamb':link.parameter(
+            name='Tamb',
+            default=20,
+            min=0,
+            max=30,
+            description='Ambient temperature in °C. Must be between 0 and 30 °C.',),
+        'mains':link.parameter(
+            name='mains',
+            default=[4,8,16,40],
+            description='Main pressures in bar. Must be a list of positive values.',),
+        'max_pressure':link.parameter(
+            name='max_pressure',
+            default=130,
+            min=10,
+            max=200,
+            description='Maximum pressure in bar.',),
+        'heat_capacity_pipe_network':link.parameter(
+            name='heat_capacity_pipe_network',
+            default=20E6,
+            description='Heat capacity of the pipe network in W.',),
+        'heat':link.parameter(
+            name='heat',
+            default=1e6,
+            description='Transferred heat at process in W.',),
+        'wind_velocity':link.parameter(
+            name='wind_velocity',
+            default=3,
+            description='Wind velocity in m/s. Must be a positive value.',),
+        'insulation_thickness':link.parameter(
+            name='insulation_thickness',
+            default=0.1,
+            description='Insulation thickness in m. Must be a positive value.',
+            reference= 'https://doi.org/10.1016/j.applthermaleng.2016.03.010'),
+        'environment_media':link.parameter(
+            name='environment_media',
+            default='air',
+            description='Environment media for heat loss calculation. Must be either "air" or "water".',),
+        'pipe_depth':link.parameter(
+            name='pipe_depth',
+            default=2,
+            description='Depth of the pipe in m. Must be a positive value.',),
+        'pipe_length':link.parameter(
+            name='pipe_length',
+            default=1000,
+            description='Length of the pipe in m. Must be a positive value.',),
+        'heat_source':link.parameter(
+            name= 'heat_source',
+            default='conv',
+            description='Tespy subsystem which models the heat source provision. "conv" for conventional heating. "hp" for heat pump'
+        )
+    }
+    def __init__(self,  name, 
+                 heatsource = 'conv', 
+                 heatpump_path='',
+                 chp=True
+                 ):
+        """
+        Initialize the `steam_net` instance.
+
+        Parameters
+        ----------
+        name : str
+            Model name.
+        heatsource : str, optional
+            Type of heat source: 'conv' (conventional boiler) or 'hp' (heat pump).
+        heatpump_path : str, optional
+            Path to JSON export of heat pump model.
+        """
+        link.SimModel.__init__(self,  name)
+        self.params['heat_source']= heatsource
+        self.params['heatpump_path']= heatpump_path
+        self.chp= chp
+        template.ModelTemplate.__init__(self)
+
+    def _create_network(self) -> None:
+        """
+        Create the full TESPy network, including heat source subsystem.
+
+        Based on `self.params['heat_source']`, either a conventional boiler or a heat pump
+        subsystem is added to the steam network via `snwm.create_steam_net`.
+
+        """
+        super()._create_network() # from modeltemplate
+
+        self.main_pressure = 0
+        self.h_superheating_max_pressure = 0
+        
+        # result properties:
+        self.elec_factor =0
+        self.boiler_factor =0
+        self.losses=0
+        self.alloc_ex=0
+        self.E_bpt =0
+        self.E_hs=0
+
+        self.converged = False
+        self._init_mains()
+        
+        self._validate_params()
+        self._calc_mains()
+        self.cond_inj = False
+        self.trap=False # droplet seperator if steam is not saturated at point of use (due to losses in pipe)
+        
+        self.desuperheat_steam=False
+
+        
+        self.model= self.nw
+
+        if self.params['heat_source']=='conv':
+            snwm.create_steam_net(self, snwm.conv_subsystem('steam boiler'), chp=self.chp)
+            
+        elif self.params['heat_source']=='hp':
+            snwm.create_steam_net(self, 
+                                  snwm.create_hp_subsystem(self.params['heatpump_path']),
+                                  chp=False)
+            self.chp=False
+        
+        
+        #self._postprocess()
+        self.initialized = True
+        
+    def _parameter_lookup(self) -> dict:
+        """
+        Return mapping of parameter names to handler functions.
+        Needed to make the model compatible to model template of tespy.
+        Used by `simodin` to update model parameters dynamically.
+
+        Returns
+        -------
+        dict
+            Mapping of parameter names to either setter functions or direct component/connection updates.
+        """
+
+        return {
+            "Tamb": {'set':self._change_Tamb},
+            "insulation_thickness":{'set':self._change_insulation},
+            "wind_velocity": {'set':self._change_wind},
+            "environment_media": {'set':self._change_env},
+            "pipe_length": {'set':self._change_length},
+            "needed_temperature":{'set':self._change_temp},
+            "heat": {'set':self._change_heat},
+            "heat_capacity_pipe_network": {'set':self._change_heat_capa},
+            "network condensation": ["Components", "a1", "Q"],
+            "leakage_factor": {'set':self._change_leakage},
+            "makeup_factor": {'set':self._change_makeup},
+            "max_pressure": ["Connections", "c0_6", "p"],
+            "mains":{'set':self._change_mains},
+        }
+    def _change_mains(self, value):
+        self.params['mains']=value
+        self._init_mains()
+        self._change_temp(value)
+        
+    def _change_temp(self, value):
+        """
+        Update steam temperature (and corresponding pressure/enthalpy settings).
+
+        Adjusts:
+        - Inlet pressure (`c1_1`) to required saturation pressure.
+        - Main pressure (`c1_5`) to selected main level.
+        - Upstream pressure (`c0_2`) depending on heat source type.
+        - Superheated enthalpy (`c1_6`) for CHP case.
+
+        Parameters
+        ----------
+        value : float or list
+            Needed temperature (°C) or list of mains (used for _change_mains dispatch).
+        """
+        self._calc_mains()
+        
+        self.model.get_conn('c1_1').set_attr(p= self.needed_pressure)
+        self.model.get_conn('c1_5').set_attr(p= self.main_pressure)
+
+        c0_2= self.model.get_conn('c0_2')
+        if self.params['heat_source']=='conv':
+            if self.params['mains'].index(self.main_pressure)!=0:
+                c0_2.set_attr(p=self.params['mains'][
+                    self.params['mains'].index(self.main_pressure)-1])
+            else:
+                c0_2.set_attr(p=1)
+        elif self.params['heat_source']=='hp':
+            c0_2.set_attr(p=1.513)
+
+        if self.chp:
+            self.model.get_conn('c1_6').set_attr(h= self.h_superheating_max_pressure)
+  
+
+    def _change_heat(self, value):
+        """
+        Update heat loads at heat sink and network condensation components.
+
+        Parameters
+        ----------
+        value : float
+            Required heat at process in W.
+        """
+        self.model.get_comp('network condensation').set_attr(
+            Q= -(self.params['heat_capacity_pipe_network']-value) )
+        self.model.get_comp('hex heat sink').set_attr(Q=-value)
+
+    def _change_heat_capa(self, value):
+        self.model.get_comp('network condensation').set_attr(
+            Q= -(value-self.params['heat'])            )   
+
+    def _change_makeup(self, value):
+        c1_6=self.model.get_conn('c1_6')
+        self.model.get_conn('muw').set_attr(m=Ref(c1_6, value, 0))
+        self.model.get_conn('c_blowdown').set_attr(m=Ref(c1_6, value, 0))
+        
+    def _change_leakage(self, value):
+        c1_4=self.model.get_conn('c1_4')
+        self.model.get_conn('c_leak').set_attr(m=Ref(c1_4, value, 0))
+
+    def _change_Tamb(self, value):
+        self.model.get_comp('steam pipe').set_attr(Tamb= value)
+        self.model.get_comp('condensate pipe').set_attr(Tamb= value)
+        #self.model.get_conn('c1_6').set_attr(T=value)
+        #self.model.get_conn('c_leak').set_attr(T= value)
+        self.model.get_conn('muw').set_attr(T= value)
+        self.model.get_conn('muw2').set_attr(T= value)
+
+    def _change_insulation(self, value):
+        self.model.get_comp('steam pipe').set_attr(insulation_thickness= value)
+        self.model.get_comp('condensate pipe').set_attr(insulation_thickness= value)
+    
+    def _change_wind(self, value):
+        self.model.get_comp('steam pipe').set_attr(wind_velocity= value)
+        self.model.get_comp('condensate pipe').set_attr(wind_velocity= value)
+    
+    def _change_env(self,value):
+        self.model.get_comp('steam pipe').set_attr(environment_media= value)
+        self.model.get_comp('condensate pipe').set_attr(environment_media= value)
+    
+    def _change_length(self,value):
+        self.model.get_comp('steam pipe').set_attr(L= value)
+        self.model.get_comp('condensate pipe').set_attr(L= value)
+
+    def init_model(self, init_arg=None):
+        """
+        Abstract simodin class. Initialising of the model.
+        
+        """
+        
+        self._create_network()
+        
+    
+    def _validate_params(self):
+        """
+        Validate model parameters for consistency.
+
+        Ensures:
+        - `max_pressure` is larger than the highest main pressure.
+        - `heat_capacity_pipe_network` is greater than or equal to the required `heat`.
+
+        """    
+        if self.params['max_pressure'] < self.params['mains'][-1]:
+            raise ValueError('max pressure must be larger than the highest main pressure')
+        if self.params['heat_capacity_pipe_network'] <self.params['heat']:
+            raise ValueError('Heat capacity of the pipe network must be larger than the transferred heat at the heat exchanger')
+    def _calc_pressure(self, temp=None):
+        """
+        Calculate the saturation pressure for a given temperature using CoolProp.
+
+        Parameters
+        ----------
+        temp : float, optional
+            Temperature in °C. If None, uses `self.params['needed_temperature']`.
+        """
+        if temp==None:
+            temp=self.params['needed_temperature']+273
+        else:
+            temp= temp+273
+        self.needed_pressure= PropsSI('P','Q',0,'T',temp,'IF97::water')*1E-5
+        
+    def _init_mains(self):
+        """
+        Initialize the dictionary of main pressure levels with their corresponding saturation temperatures.
+
+        Populates `self.main_dict` with pressure keys (as strings), pressure values, and
+        saturation temperatures (in °C) for each main pressure level.
+        """
+        self.params['mains'].sort()
+        self.main_dict={}
+        for pres in self.params['mains']:
+            self.main_dict[str(pres)] = {}
+            self.main_dict[str(pres)]['pressure'] = pres
+            self.main_dict[str(pres)]['temperature'] =PropsSI('T', 'P', pres*1E5, 'Q', 1, 'IF97::water') - 273.15 # in °C
+            self.main_dict[str(pres)]['impact'] = None
+    def _calc_mains(self, temp=None): 
+        """
+        Compute required pressure and determine main pressure level for steam distribution.
+
+        Determines:
+        - Saturation pressure for needed temperature (`self.needed_pressure`)
+        - Enthalpy at maximum pressure corresponding to max pressure's entropy at Q=1 (`self.h_superheating_max_pressure`)
+        - Selected main pressure level (`self.main_pressure`), at least 10% above `self.needed_pressure`.
+
+        Parameters
+        ----------
+        temp : float, optional
+            Temperature in °C to compute needed pressure. Uses `needed_temperature` if None.
+        """
+        self.params['mains'].sort()
+        self._calc_pressure(temp)
+        s_superheating_max_pressure=  PropsSI('S','P',self.params['mains'][0]*1E5,'Q',1,'IF97::water') 
+        self.h_superheating_max_pressure=  PropsSI('H','P',self.params['max_pressure']*1E5,'S',s_superheating_max_pressure,'IF97::water') *1E-3
+        if self.needed_pressure*1.02 > self.params['mains'][-1]:
+            print('needed pressure larger than net pressure!')
+        self.main_pressure = min((x for x in self.params['mains'] if x >= self.needed_pressure*1.1), default=None) 
+
+    def calculate_model(self, **params):
+        """
+        Method to calculate the steam net model.
+        """
+
+        self._validate_params()
+        self._calc_mains()
+        mains_sorted = sorted(self.params['mains'])
+        if self.main_pressure in mains_sorted:
+            idx = mains_sorted.index(self.main_pressure)
+            next_main = mains_sorted[idx - 1] if idx - 1 >= 0 else 1.013
+        else:
+            raise ValueError("Main pressure not found in mains list")
+        i=0
+        while i < 3:
+            try:
+                #snwm.create_steam_net(self)
+                #print('changed params:', params)
+                self.solve_model_design(**params)
+            except Exception as e:
+                print('did not solve')
+                #logger.info(f'Calculation failed: {e}')
+                raise Exception(f'Calculation failed: {e}')
+            else:
+                self.converged=True
+                self._postprocess()
+                break
+
+            i+=1
+        else:
+            raise Exception('Steam net calculation failed. Check the parameter and try again!')
+        
+        #self.define_flows()
+    
+    
+    def define_flows(self):
+        """
+        Define the technosphere and biosphere flows of the model based on the calculated model. 
+        """
+
+
+        if not self.converged:
+            self.calculate_model()
+
+        self.technosphere={
+            'steam generation': link.technosphere_edge(
+                name='steam generation',
+                source= None,
+                target=self,
+                amount= lambda:self.model.get_conn("e_boil2").E._val*self.model.units.ureg.second ,
+                type= link.technosphereTypes.input,
+                description= f'Steam generation for high pressure steam of 100 bar in large chemical plants. Without any distribution losses. If distribution losses are assumed in original dataset, correct them in this flow.',
+                default_name='heat production, natural gas, at industrial furnace >100kW'
+                ),
+            'electricity grid':link.technosphere_edge(
+                name='electricity grid',
+                source= None,
+                target=self,
+                amount= lambda:self.model.get_conn("e_pump").E._val *self.model.units.ureg.second ,
+                type= link.technosphereTypes.input,
+                description= 'Electricity from grid, medium voltage.',
+                default_name= 'market for electricity, medium'
+                ),
+            'electricity substitution':link.technosphere_edge(
+                name='electricity substitution',
+                source= self,
+                target= None,
+                amount= lambda:-self.model.get_conn("e_turb_grid").E._val*self.model.units.ureg.second if self.chp else 0,
+                type= link.technosphereTypes.substitution,
+                default_name= 'market for electricity, medium'),
+            'distributed steam':link.technosphere_edge(
+                name='distributed steam',
+                source= self,
+                target = None,
+                amount= lambda:(self.model.get_conn("e_heat_sink").E._val*self.model.units.ureg.second).to('megajoule'),
+                functional = True,
+                reference = True,
+                type= link.technosphereTypes.product,
+                allocationfactor=lambda:((self.model.get_comp('hex heat sink').Q._val/
+                                  (self.model.get_comp('network condensation').Q._val +self.model.get_comp('hex heat sink').Q._val)).m),
+                model_unit='MJ',
+                description='Distributed steam at condenser. Incl. distribution losses and multifunctionality ' \
+                'due to electricity generation in back pressure turbine taken into account.'),
+            'network steam':link.technosphere_edge(
+                name='network steam',
+                source= self,
+                target = None,
+                amount= lambda:(self.model.get_conn("e_nw_heat_sink").E._val*self.model.units.ureg.second).to('megajoule'),
+                functional = True,
+                reference = False,
+                type= link.technosphereTypes.product,
+                allocationfactor=lambda:((self.model.get_comp('network condensation').Q._val/
+                                  (self.model.get_comp('network condensation').Q._val +self.model.get_comp('hex heat sink').Q._val)).m),
+                model_unit='MJ',
+                description='Distributed steam at network.')
+            
+            }
+
+        self.biosphere={'steam leak':link.biosphere_edge(
+            name= 'steam leak',
+            source= self,
+            target= None,
+            amount= lambda:(self.model.get_conn("c_leak").m._val*
+                     self.model.units.ureg.second).to('tonne').m *self.model.units.ureg('m^3'),
+            default_code= '51254820-3456-4373-b7b4-056cf7b16e01'
+            )}
+
+
+    def _postprocess(self):
+        c_leak = self.model.get_conn('c_leak')
+        c1_4 = self.model.get_conn('c1_4')
+        c1_5 = self.model.get_conn('c1_5')
+        
+        c1_1 = self.model.get_conn('c1_1')
+        c0_2 = self.model.get_conn('c0_1')
+        c0_3 = self.model.get_conn('c0_3')
+        muw= self.model.get_conn('muw')
+        muw2=self.model.get_conn('muw2')
+        
+        #boiler=self.model.get_conn("e_boil2")
+        hex_heat_sink=self.model.get_conn("e_heat_sink")
+        net_heat_sink=self.model.get_conn("e_nw_heat_sink")
+        t_amb= self.model.units.ureg.Quantity(self.params['Tamb'],'degC').to('kelvin')
+
+        leakage_loss= c_leak.m._val *(c_leak.h._val - muw2.h._val)
+        pipe_loss = self.model.get_conn('e_pi_sink').E._val 
+        #(abs(c1_4.m._val *c1_5.h._val - c1_4.m._val * c1_4.h._val )
+        #            + abs(c0_2.m._val * c0_2.h._val - c0_3.m._val * c0_3.h._val)
+        #)
+        if self.chp:
+            c1_6 = self.model.get_conn('c1_6')
+            turbine_grid = self.model.get_conn('e_turb_grid')
+            self.elec_factor= abs((turbine_grid.E._val/hex_heat_sink.E._val).to_base_units().m )
+            e_turb= abs(self.model.get_conn('e_turb').E._val)
+            self.E_bpt=((c1_5.h._val -c1_6.h._val) 
+                        - t_amb * (c1_5.s._val - c1_6.s._val))* c1_5.m._val
+        else:
+            e_turb= 0
+            self.E_bpt= 0
+        if self.params['heat_source']=='conv':
+            self.boiler_factor = abs((self.model.get_conn('e_boil2').E._val
+                                      /hex_heat_sink.E._val).to_base_units().m)
+        self.diss_losses=(abs(pipe_loss)/
+                     (abs(self.model.get_conn('e_boil2').E._val)
+                      -e_turb
+                      +self.model.get_conn('e_pump').E._val)
+                     ).to_base_units().m
+        self.leak_losses=(abs(leakage_loss)/
+                     (abs(self.model.get_conn('e_boil2').E._val)
+                      -e_turb
+                      +self.model.get_conn('e_pump').E._val)
+                     ).to_base_units().m
+        # not valid for heatpump:
+        self.losses=1-(
+            (self.model.get_conn('e_heat_sink').E._val + 
+             self.model.get_conn('e_nw_heat_sink').E._val
+             )/
+            (self.model.get_conn('e_boil2').E._val
+             -e_turb
+             +self.model.get_conn('e_pump').E._val) 
+            )
+        
+        self.watertreatment_factor = abs(muw.m._val/hex_heat_sink.E._val).m
+        #calc exergy reduction:
+        
+        
+
+        if self.cond_inj:
+            cond_5 = self.model.get_conn('cond_5')
+            cond_1 = self.model.get_conn('cond_1')
+            self.E_hs= ((cond_1.h._val -cond_5.h._val) 
+                        - t_amb * (cond_1.s._val - cond_5.s._val))* cond_5.m._val
+        else:
+            self.E_hs= ((c0_2.h._val -c1_1.h._val) 
+                        - t_amb * (c0_2.s._val - c1_1.s._val))* c1_1.m._val
+        self.E_nw_hs= (((self.model.get_conn('cnw2').h._val -self.model.get_conn('cnw1').h._val) 
+                        - t_amb * (self.model.get_conn('cnw2').s._val 
+                                   - self.model.get_conn('cnw1').s._val))
+                        * self.model.get_conn('cnw1').m._val)
+        
+        self.alloc_ex = (self.E_bpt /(self.E_hs + self.E_bpt + self.E_nw_hs)).m
