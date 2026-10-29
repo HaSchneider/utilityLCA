@@ -1,0 +1,4024 @@
+{
+  "meta": {
+    "kind": "network",
+    "format_version": 1,
+    "tespy_version": "0.11.3 - Rankine's Renaissance",
+    "tespy_commit": null,
+    "created": "2026-10-29T14:47:35+00:00",
+    "status": 0
+  },
+  "Network": {
+    "m_range": [
+      -1000000000000.0,
+      1000000000000.0
+    ],
+    "p_range": [
+      0.002,
+      300.0
+    ],
+    "h_range": [
+      1.0,
+      7000.0
+    ],
+    "units": {
+      "temperature": "degC",
+      "temperature_difference": "delta_degC",
+      "enthalpy": "kJ / kg",
+      "specific_energy": "J/kg",
+      "entropy": "J/kg/K",
+      "pressure": "bar",
+      "pressure_difference": "bar",
+      "mass_flow": "kg / s",
+      "volumetric_flow": "m3/s",
+      "specific_volume": "m3/kg",
+      "power": "W",
+      "heat": "W",
+      "quality": "1",
+      "vapor_mass_fraction": "1",
+      "efficiency": "1",
+      "ratio": "1",
+      "length": "m",
+      "speed": "m/s",
+      "area": "m2",
+      "thermal_conductivity": "W/m/K",
+      "heat_transfer_coefficient": "W/K",
+      "heat_transfer_coefficient_per_area": "W/m**2/K",
+      "thermal_resistance": "K/W",
+      "angle": "degree",
+      "frequency": "1/s"
+    }
+  },
+  "Connection": {
+    "Connection": {
+      "A0": {
+        "source": "Condenser",
+        "target": "Main Cycle Closer",
+        "source_id": "out1",
+        "target_id": "in1",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 94.6433318941949,
+          "val_SI": 94.6433318941949,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 16.72059333667384,
+          "val_SI": 1672059.333667384,
+          "is_set": false,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 389.0970468067082,
+          "val_SI": 389097.0468067082,
+          "is_set": false,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 140.93835142566314,
+          "val_SI": 414.0883514256631,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 140.93835142566314,
+          "val_SI": 414.0883514256631,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 140.93835142566314,
+          "val_SI": 414.0883514256631,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 0.09896892478719373,
+          "val_SI": 0.09896892478719373,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {},
+        "v_ref": {},
+        "vol": {
+          "val": 0.0010457041484743432,
+          "val_SI": 0.0010457041484743432,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 1548.6012724354837,
+          "val_SI": 1548.6012724354837,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "R1336mzz(Z)": 1.0
+          },
+          "is_set": [
+            "R1336mzz(Z)"
+          ],
+          "engine": {
+            "R1336mzz(Z)": "CoolPropWrapper"
+          },
+          "back_end": {
+            "R1336mzz(Z)": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      },
+      "A1": {
+        "source": "Main Cycle Closer",
+        "target": "Internal Heat Exchanger",
+        "source_id": "out1",
+        "target_id": "in1",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 94.6433318941949,
+          "val_SI": 94.6433318941949,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 16.72059333667384,
+          "val_SI": 1672059.333667384,
+          "is_set": false,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 389.0970468067082,
+          "val_SI": 389097.0468067082,
+          "is_set": false,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 140.93835142566314,
+          "val_SI": 414.0883514256631,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 140.93835142566314,
+          "val_SI": 414.0883514256631,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 140.93835142566314,
+          "val_SI": 414.0883514256631,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 0.09896892478719373,
+          "val_SI": 0.09896892478719373,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {},
+        "v_ref": {},
+        "vol": {
+          "val": 0.0010457041484743432,
+          "val_SI": 0.0010457041484743432,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 1548.6012724354837,
+          "val_SI": 1548.6012724354837,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "R1336mzz(Z)": 1.0
+          },
+          "is_set": [],
+          "engine": {
+            "R1336mzz(Z)": "CoolPropWrapper"
+          },
+          "back_end": {
+            "R1336mzz(Z)": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      },
+      "A2": {
+        "source": "Internal Heat Exchanger",
+        "target": "Valve",
+        "source_id": "out1",
+        "target_id": "in1",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 94.6433318941949,
+          "val_SI": 94.6433318941949,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 16.386181469940365,
+          "val_SI": 1638618.1469940364,
+          "is_set": false,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 258.1842208647061,
+          "val_SI": 258184.22086470612,
+          "is_set": false,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 47.43001270911088,
+          "val_SI": 320.58001270911086,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 139.88135635863745,
+          "val_SI": 413.0313563586374,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 139.88135635863745,
+          "val_SI": 413.0313563586374,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 0.07220380715917323,
+          "val_SI": 0.07220380715917323,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": -92.45134364952656,
+          "val_SI": -92.45134364952656,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": 92.45134364952656,
+          "val_SI": 92.45134364952656,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {
+          "is_set": true,
+          "unit": null,
+          "conn": "A4",
+          "factor": 1,
+          "delta": 10
+        },
+        "v_ref": {},
+        "vol": {
+          "val": 0.0007629043242041858,
+          "val_SI": 0.0007629043242041858,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 1192.2509067867327,
+          "val_SI": 1192.2509067867327,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "R1336mzz(Z)": 1.0
+          },
+          "is_set": [],
+          "engine": {
+            "R1336mzz(Z)": "CoolPropWrapper"
+          },
+          "back_end": {
+            "R1336mzz(Z)": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      },
+      "A3": {
+        "source": "Valve",
+        "target": "Evaporator",
+        "source_id": "out1",
+        "target_id": "in2",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 94.6433318941949,
+          "val_SI": 94.6433318941949,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 1.1934096260205938,
+          "val_SI": 119340.96260205936,
+          "is_set": false,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 258.1842208647061,
+          "val_SI": 258184.22086470612,
+          "is_set": false,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 37.999999999999545,
+          "val_SI": 311.1499999999995,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 37.999999999999545,
+          "val_SI": 311.1499999999995,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 37.999999999999545,
+          "val_SI": 311.1499999999995,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 0.9528363333693828,
+          "val_SI": 0.9528363333693828,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 0.07533016757400991,
+          "val_SI": 0.07533016757400991,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {},
+        "v_ref": {},
+        "vol": {
+          "val": 0.010067654152693947,
+          "val_SI": 0.010067654152693947,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 1196.478564848673,
+          "val_SI": 1196.478564848673,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "R1336mzz(Z)": 1.0
+          },
+          "is_set": [],
+          "engine": {
+            "R1336mzz(Z)": "CoolPropWrapper"
+          },
+          "back_end": {
+            "R1336mzz(Z)": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      },
+      "A4": {
+        "source": "Evaporator",
+        "target": "Internal Heat Exchanger",
+        "source_id": "out2",
+        "target_id": "in2",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 94.6433318941949,
+          "val_SI": 94.6433318941949,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 1.169541433500182,
+          "val_SI": 116954.14335001817,
+          "is_set": false,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 305.8179846149884,
+          "val_SI": 305817.9846149884,
+          "is_set": false,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 37.43001270911088,
+          "val_SI": 310.58001270911086,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 37.43001270911088,
+          "val_SI": 310.58001270911086,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 37.43001270911088,
+          "val_SI": 310.58001270911086,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 4.514671231995577,
+          "val_SI": 4.514671231995577,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 0.37238123658367217,
+          "val_SI": 0.37238123658367217,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {},
+        "v_ref": {},
+        "vol": {
+          "val": 0.047701947317774974,
+          "val_SI": 0.047701947317774974,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 1349.9289397467128,
+          "val_SI": 1349.9289397467128,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "R1336mzz(Z)": 1.0
+          },
+          "is_set": [],
+          "engine": {
+            "R1336mzz(Z)": "CoolPropWrapper"
+          },
+          "back_end": {
+            "R1336mzz(Z)": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      },
+      "A5": {
+        "source": "Internal Heat Exchanger",
+        "target": "Compressor",
+        "source_id": "out2",
+        "target_id": "in1",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 94.6433318941949,
+          "val_SI": 94.6433318941949,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 1.146150604830178,
+          "val_SI": 114615.06048301779,
+          "is_set": false,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 436.73081055699043,
+          "val_SI": 436730.81055699044,
+          "is_set": false,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 68.48156001806603,
+          "val_SI": 341.631560018066,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 36.862505895077845,
+          "val_SI": 310.0125058950778,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 36.862505895077845,
+          "val_SI": 310.0125058950778,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 13.749680615086236,
+          "val_SI": 13.749680615086236,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 1.0,
+          "val_SI": 1.0,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": 31.61905412298819,
+          "val_SI": 31.61905412298819,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": -31.61905412298819,
+          "val_SI": -31.61905412298819,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {},
+        "v_ref": {},
+        "vol": {
+          "val": 0.14527891548088656,
+          "val_SI": 0.14527891548088656,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 1768.034935072551,
+          "val_SI": 1768.034935072551,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "R1336mzz(Z)": 1.0
+          },
+          "is_set": [],
+          "engine": {
+            "R1336mzz(Z)": "CoolPropWrapper"
+          },
+          "back_end": {
+            "R1336mzz(Z)": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      },
+      "A6": {
+        "source": "Compressor",
+        "target": "Condenser",
+        "source_id": "out1",
+        "target_id": "in1",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 94.6433318941949,
+          "val_SI": 94.6433318941949,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 17.06182993538147,
+          "val_SI": 1706182.993538147,
+          "is_set": false,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 494.72782789472126,
+          "val_SI": 494727.82789472124,
+          "is_set": true,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 151.9999999990648,
+          "val_SI": 425.1499999990648,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 141.99999999837587,
+          "val_SI": 415.14999999837585,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 141.99999999837587,
+          "val_SI": 415.14999999837585,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 0.8123444083097361,
+          "val_SI": 0.8123444083097361,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 1.0,
+          "val_SI": 1.0,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": 10.000000000688942,
+          "val_SI": 10.000000000688942,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": -10.000000000688942,
+          "val_SI": -10.000000000688942,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {},
+        "v_ref": {},
+        "vol": {
+          "val": 0.00858321861721737,
+          "val_SI": 0.00858321861721737,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 1802.5513487881417,
+          "val_SI": 1802.5513487881417,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "R1336mzz(Z)": 1.0
+          },
+          "is_set": [],
+          "engine": {
+            "R1336mzz(Z)": "CoolPropWrapper"
+          },
+          "back_end": {
+            "R1336mzz(Z)": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      },
+      "B1": {
+        "source": "Heat Source Feed Flow",
+        "target": "Evaporator",
+        "source_id": "out1",
+        "target_id": "in1",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 53.90399967632006,
+          "val_SI": 53.90399967632006,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 1.013,
+          "val_SI": 101299.99999999999,
+          "is_set": true,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 251.24867253138873,
+          "val_SI": 251248.67253138873,
+          "is_set": false,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 60.0,
+          "val_SI": 333.1500000000354,
+          "is_set": true,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 99.9673825497556,
+          "val_SI": 373.1173825497556,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 99.9673825497556,
+          "val_SI": 373.1173825497556,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 0.054825294155760894,
+          "val_SI": 0.054825294155760894,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": -39.967382549720185,
+          "val_SI": -39.967382549720185,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": 39.967382549720185,
+          "val_SI": 39.967382549720185,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {},
+        "v_ref": {},
+        "vol": {
+          "val": 0.001017091393680858,
+          "val_SI": 0.001017091393680858,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 831.2498084374688,
+          "val_SI": 831.2498084374688,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "H2O": 1.0
+          },
+          "is_set": [
+            "H2O"
+          ],
+          "engine": {
+            "H2O": "CoolPropWrapper"
+          },
+          "back_end": {
+            "H2O": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      },
+      "B2": {
+        "source": "Evaporator",
+        "target": "Heat Source Recirculation Pump",
+        "source_id": "out1",
+        "target_id": "in1",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 53.90399967632006,
+          "val_SI": 53.90399967632006,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 0.99274,
+          "val_SI": 99273.99999999999,
+          "is_set": false,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 167.6144684081632,
+          "val_SI": 167614.4684081632,
+          "is_set": false,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 40.0,
+          "val_SI": 313.1499999999995,
+          "is_set": true,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 99.40237418768282,
+          "val_SI": 372.5523741876828,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 99.40237418768282,
+          "val_SI": 372.5523741876828,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 0.054326910081799296,
+          "val_SI": 0.054326910081799296,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": -59.40237418768328,
+          "val_SI": -59.40237418768328,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": 59.40237418768328,
+          "val_SI": 59.40237418768328,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {},
+        "v_ref": {},
+        "vol": {
+          "val": 0.0010078456219950042,
+          "val_SI": 0.0010078456219950042,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 572.3660380101187,
+          "val_SI": 572.3660380101187,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "H2O": 1.0
+          },
+          "is_set": [],
+          "engine": {
+            "H2O": "CoolPropWrapper"
+          },
+          "back_end": {
+            "H2O": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      },
+      "B3": {
+        "source": "Heat Source Recirculation Pump",
+        "target": "Heat Source Back Flow",
+        "source_id": "out1",
+        "target_id": "in1",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 53.90399967632006,
+          "val_SI": 53.90399967632006,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 1.013,
+          "val_SI": 101299.99999999999,
+          "is_set": true,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 167.61702077604886,
+          "val_SI": 167617.02077604886,
+          "is_set": false,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 40.000181115372186,
+          "val_SI": 313.15018111537216,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 99.9673825497556,
+          "val_SI": 373.1173825497556,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 99.9673825497556,
+          "val_SI": 373.1173825497556,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 0.054326865183947075,
+          "val_SI": 0.054326865183947075,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": -59.96720143438341,
+          "val_SI": -59.96720143438341,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": 59.96720143438341,
+          "val_SI": 59.96720143438341,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {},
+        "v_ref": {},
+        "vol": {
+          "val": 0.0010078447890725403,
+          "val_SI": 0.0010078447890725403,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 572.3676681342433,
+          "val_SI": 572.3676681342433,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "H2O": 1.0
+          },
+          "is_set": [],
+          "engine": {
+            "H2O": "CoolPropWrapper"
+          },
+          "back_end": {
+            "H2O": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      },
+      "C0": {
+        "source": "Consumer",
+        "target": "Consumer Cycle Closer",
+        "source_id": "out1",
+        "target_id": "in1",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 52.40992013139565,
+          "val_SI": 52.40992013139565,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 9.8,
+          "val_SI": 980000.0,
+          "is_set": false,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 398.7719062783963,
+          "val_SI": 398771.90627839626,
+          "is_set": false,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 94.99999996283549,
+          "val_SI": 368.14999996283547,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 179.00201377962918,
+          "val_SI": 452.15201377962916,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 179.00201377962918,
+          "val_SI": 452.15201377962916,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 0.054463481378971626,
+          "val_SI": 0.054463481378971626,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": -84.00201381679369,
+          "val_SI": -84.00201381679369,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": 84.00201381679369,
+          "val_SI": 84.00201381679369,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {},
+        "v_ref": {},
+        "vol": {
+          "val": 0.0010391826822560984,
+          "val_SI": 0.0010391826822560984,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 1249.719179141493,
+          "val_SI": 1249.719179141493,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "H2O": 1.0
+          },
+          "is_set": [],
+          "engine": {
+            "H2O": "CoolPropWrapper"
+          },
+          "back_end": {
+            "H2O": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      },
+      "C1": {
+        "source": "Consumer Cycle Closer",
+        "target": "Consumer Recirculation Pump",
+        "source_id": "out1",
+        "target_id": "in1",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 52.40992013139565,
+          "val_SI": 52.40992013139565,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 9.8,
+          "val_SI": 980000.0,
+          "is_set": false,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 398.7719062783963,
+          "val_SI": 398771.90627839626,
+          "is_set": false,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 95.0,
+          "val_SI": 368.14999996283547,
+          "is_set": true,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 179.00201377962918,
+          "val_SI": 452.15201377962916,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 179.00201377962918,
+          "val_SI": 452.15201377962916,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 0.054463481378971626,
+          "val_SI": 0.054463481378971626,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": -84.00201381679369,
+          "val_SI": -84.00201381679369,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": 84.00201381679369,
+          "val_SI": 84.00201381679369,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {},
+        "v_ref": {},
+        "vol": {
+          "val": 0.0010391826822560984,
+          "val_SI": 0.0010391826822560984,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 1249.719179141493,
+          "val_SI": 1249.719179141493,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "H2O": 1.0
+          },
+          "is_set": [],
+          "engine": {
+            "H2O": "CoolPropWrapper"
+          },
+          "back_end": {
+            "H2O": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      },
+      "C2": {
+        "source": "Consumer Recirculation Pump",
+        "target": "Condenser",
+        "source_id": "out1",
+        "target_id": "in2",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 52.40992013139565,
+          "val_SI": 52.40992013139565,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 10.204081632653063,
+          "val_SI": 1020408.1632653062,
+          "is_set": false,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 398.82439495300673,
+          "val_SI": 398824.3949530067,
+          "is_set": false,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 95.00514804363866,
+          "val_SI": 368.15514804363863,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 180.7577697437144,
+          "val_SI": 453.90776974371437,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 180.7577697437144,
+          "val_SI": 453.90776974371437,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 0.0544626264858023,
+          "val_SI": 0.0544626264858023,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": -85.75262170007574,
+          "val_SI": -85.75262170007574,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": 85.75262170007574,
+          "val_SI": 85.75262170007574,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {},
+        "v_ref": {},
+        "vol": {
+          "val": 0.0010391663705890098,
+          "val_SI": 0.0010391663705890098,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 1249.7476931897468,
+          "val_SI": 1249.7476931897468,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "H2O": 1.0
+          },
+          "is_set": [],
+          "engine": {
+            "H2O": "CoolPropWrapper"
+          },
+          "back_end": {
+            "H2O": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      },
+      "C3": {
+        "source": "Condenser",
+        "target": "Consumer",
+        "source_id": "out2",
+        "target_id": "in1",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "mixing_rule": "ideal-cond",
+        "m": {
+          "val": 52.40992013139565,
+          "val_SI": 52.40992013139565,
+          "is_set": false,
+          "unit": "kilogram / second"
+        },
+        "p": {
+          "val": 10.0,
+          "val_SI": 1000000.0,
+          "is_set": true,
+          "unit": "bar"
+        },
+        "h": {
+          "val": 589.5754788640678,
+          "val_SI": 589575.4788640678,
+          "is_set": false,
+          "unit": "kilojoule / kilogram"
+        },
+        "T": {
+          "val": 140.0,
+          "val_SI": 413.14999999837585,
+          "is_set": true,
+          "unit": "degree_Celsius"
+        },
+        "T_bubble": {
+          "val": 179.87800788167448,
+          "val_SI": 453.02800788167445,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "T_dew": {
+          "val": 179.87800788167448,
+          "val_SI": 453.02800788167445,
+          "is_set": false,
+          "unit": "degree_Celsius"
+        },
+        "v": {
+          "val": 0.056568814784017034,
+          "val_SI": 0.056568814784017034,
+          "is_set": false,
+          "unit": "m3 / second"
+        },
+        "x": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "dimensionless"
+        },
+        "td_dew": {
+          "val": -39.87800788329861,
+          "val_SI": -39.87800788329861,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "td_bubble": {
+          "val": 39.87800788329861,
+          "val_SI": 39.87800788329861,
+          "is_set": false,
+          "unit": "delta_degree_Celsius"
+        },
+        "m_ref": {},
+        "p_ref": {},
+        "h_ref": {},
+        "T_ref": {},
+        "v_ref": {},
+        "vol": {
+          "val": 0.0010793531957727605,
+          "val_SI": 0.0010793531957727605,
+          "is_set": false,
+          "unit": "m3 / kilogram"
+        },
+        "s": {
+          "val": 1738.552491107647,
+          "val_SI": 1738.552491107647,
+          "is_set": false,
+          "unit": "joule / kelvin / kilogram"
+        },
+        "fluid": {
+          "val": {
+            "H2O": 1.0
+          },
+          "is_set": [
+            "H2O"
+          ],
+          "engine": {
+            "H2O": "CoolPropWrapper"
+          },
+          "back_end": {
+            "H2O": null
+          }
+        },
+        "fluid_balance": {
+          "val": false,
+          "is_set": false
+        },
+        "state": {
+          "val": NaN,
+          "is_set": false
+        }
+      }
+    },
+    "PowerConnection": {
+      "E_comp_in": {
+        "source": "Power Distribution",
+        "target": "Compressor Motor",
+        "source_id": "power_out1",
+        "target_id": "power_in",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "E": {
+          "val": 5601052.000783909,
+          "val_SI": 5601052.000783909,
+          "is_set": false,
+          "unit": "watt"
+        }
+      },
+      "E_comp_out": {
+        "source": "Compressor Motor",
+        "target": "Compressor",
+        "source_id": "power_out",
+        "target_id": "power",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "E": {
+          "val": 5489030.960768231,
+          "val_SI": 5489030.960768231,
+          "is_set": false,
+          "unit": "watt"
+        }
+      },
+      "E_cons_pump_in": {
+        "source": "Power Distribution",
+        "target": "Consumer Recirculation Pump Motor",
+        "source_id": "power_out3",
+        "target_id": "power_in",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "E": {
+          "val": 2807.0686164655876,
+          "val_SI": 2807.0686164655876,
+          "is_set": false,
+          "unit": "watt"
+        }
+      },
+      "E_cons_pump_out": {
+        "source": "Consumer Recirculation Pump Motor",
+        "target": "Consumer Recirculation Pump",
+        "source_id": "power_out",
+        "target_id": "power",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "E": {
+          "val": 2750.927244136276,
+          "val_SI": 2750.927244136276,
+          "is_set": false,
+          "unit": "watt"
+        }
+      },
+      "E_grid": {
+        "source": "Grid",
+        "target": "Power Distribution",
+        "source_id": "power",
+        "target_id": "power_in1",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "E": {
+          "val": 5603999.460051071,
+          "val_SI": 5603999.460051071,
+          "is_set": false,
+          "unit": "watt"
+        }
+      },
+      "E_hs_pump_in": {
+        "source": "Power Distribution",
+        "target": "Heat Source Recirculation Pump Motor",
+        "source_id": "power_out2",
+        "target_id": "power_in",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "E": {
+          "val": 140.3906506961334,
+          "val_SI": 140.3906506961334,
+          "is_set": false,
+          "unit": "watt"
+        }
+      },
+      "E_hs_pump_out": {
+        "source": "Heat Source Recirculation Pump Motor",
+        "target": "Heat Source Recirculation Pump",
+        "source_id": "power_out",
+        "target_id": "power",
+        "design_path": null,
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "printout": true,
+        "E": {
+          "val": 137.58283768221074,
+          "val_SI": 137.58283768221074,
+          "is_set": false,
+          "unit": "watt"
+        }
+      }
+    }
+  },
+  "Component": {
+    "Compressor": {
+      "Compressor": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Compressor",
+        "char_warnings": true,
+        "bypass": false,
+        "P": {
+          "val": 5489030.960768231,
+          "val_SI": 5489030.960768231,
+          "is_set": false,
+          "unit": "watt",
+          "is_var": false
+        },
+        "pr": {
+          "val": 14.886202444494174,
+          "val_SI": 14.886202444494174,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "dp": {
+          "val": -15.915679330551296,
+          "val_SI": -1591567.9330551294,
+          "is_set": false,
+          "unit": "bar",
+          "is_var": false
+        },
+        "eta_s": {
+          "val": 0.75,
+          "val_SI": 0.7499999999999948,
+          "is_set": true,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "eta_s_char": {
+          "char_func": {
+            "x": [
+              0.49,
+              0.55782,
+              0.62612,
+              0.69418,
+              0.76132,
+              0.82682,
+              0.89,
+              0.95016,
+              1.0,
+              1.04326,
+              1.07753,
+              1.10916,
+              1.13795,
+              1.16365,
+              1.18604,
+              1.2049,
+              1.22
+            ],
+            "y": [
+              0.78,
+              0.82066,
+              0.86025,
+              0.89742,
+              0.93083,
+              0.95914,
+              0.981,
+              0.99507,
+              1.0,
+              0.99733,
+              0.98913,
+              0.97496,
+              0.95435,
+              0.92687,
+              0.89205,
+              0.84944,
+              0.79859
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "igva": {
+          "val": NaN,
+          "val_SI": NaN,
+          "is_set": false,
+          "unit": "degree",
+          "is_var": false
+        }
+      }
+    },
+    "Motor": {
+      "Compressor Motor": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Compressor Motor",
+        "char_warnings": true,
+        "bypass": false,
+        "eta": {
+          "val": 0.98,
+          "val_SI": 0.9800000000000001,
+          "is_set": true,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "delta_power": {
+          "val": 112021.04001567792,
+          "val_SI": 112021.04001567792,
+          "is_set": false,
+          "unit": "watt",
+          "is_var": false
+        },
+        "eta_char": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.05,
+              0.1,
+              0.15,
+              0.2,
+              0.25,
+              0.3,
+              0.35,
+              0.4,
+              0.45,
+              0.5,
+              0.55,
+              0.6,
+              0.65,
+              0.7,
+              0.75,
+              0.8,
+              0.85,
+              0.9,
+              0.95,
+              1.0,
+              1.05,
+              1.1,
+              1.15,
+              1.2,
+              10.0
+            ],
+            "y": [
+              0.01,
+              0.3148,
+              0.5346,
+              0.6843,
+              0.7835,
+              0.8477,
+              0.8885,
+              0.9145,
+              0.9318,
+              0.9443,
+              0.9546,
+              0.9638,
+              0.9724,
+              0.9806,
+              0.9878,
+              0.9938,
+              0.9982,
+              1.0009,
+              1.002,
+              1.0015,
+              1.0,
+              0.9977,
+              0.9947,
+              0.9909,
+              0.9853,
+              0.9644
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": null,
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        }
+      },
+      "Consumer Recirculation Pump Motor": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Consumer Recirculation Pump Motor",
+        "char_warnings": true,
+        "bypass": false,
+        "eta": {
+          "val": 0.98,
+          "val_SI": 0.98,
+          "is_set": true,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "delta_power": {
+          "val": 56.14137232931171,
+          "val_SI": 56.14137232931171,
+          "is_set": false,
+          "unit": "watt",
+          "is_var": false
+        },
+        "eta_char": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.05,
+              0.1,
+              0.15,
+              0.2,
+              0.25,
+              0.3,
+              0.35,
+              0.4,
+              0.45,
+              0.5,
+              0.55,
+              0.6,
+              0.65,
+              0.7,
+              0.75,
+              0.8,
+              0.85,
+              0.9,
+              0.95,
+              1.0,
+              1.05,
+              1.1,
+              1.15,
+              1.2,
+              10.0
+            ],
+            "y": [
+              0.01,
+              0.3148,
+              0.5346,
+              0.6843,
+              0.7835,
+              0.8477,
+              0.8885,
+              0.9145,
+              0.9318,
+              0.9443,
+              0.9546,
+              0.9638,
+              0.9724,
+              0.9806,
+              0.9878,
+              0.9938,
+              0.9982,
+              1.0009,
+              1.002,
+              1.0015,
+              1.0,
+              0.9977,
+              0.9947,
+              0.9909,
+              0.9853,
+              0.9644
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": null,
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        }
+      },
+      "Heat Source Recirculation Pump Motor": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Heat Source Recirculation Pump Motor",
+        "char_warnings": true,
+        "bypass": false,
+        "eta": {
+          "val": 0.98,
+          "val_SI": 0.98,
+          "is_set": true,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "delta_power": {
+          "val": 2.8078130139226687,
+          "val_SI": 2.8078130139226687,
+          "is_set": false,
+          "unit": "watt",
+          "is_var": false
+        },
+        "eta_char": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.05,
+              0.1,
+              0.15,
+              0.2,
+              0.25,
+              0.3,
+              0.35,
+              0.4,
+              0.45,
+              0.5,
+              0.55,
+              0.6,
+              0.65,
+              0.7,
+              0.75,
+              0.8,
+              0.85,
+              0.9,
+              0.95,
+              1.0,
+              1.05,
+              1.1,
+              1.15,
+              1.2,
+              10.0
+            ],
+            "y": [
+              0.01,
+              0.3148,
+              0.5346,
+              0.6843,
+              0.7835,
+              0.8477,
+              0.8885,
+              0.9145,
+              0.9318,
+              0.9443,
+              0.9546,
+              0.9638,
+              0.9724,
+              0.9806,
+              0.9878,
+              0.9938,
+              0.9982,
+              1.0009,
+              1.002,
+              1.0015,
+              1.0,
+              0.9977,
+              0.9947,
+              0.9909,
+              0.9853,
+              0.9644
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": null,
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        }
+      }
+    },
+    "Condenser": {
+      "Condenser": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Condenser",
+        "char_warnings": true,
+        "bypass": false,
+        "Q": {
+          "val": -9997249.072755862,
+          "val_SI": -9997249.072755862,
+          "is_set": false,
+          "unit": "watt",
+          "is_var": false
+        },
+        "UA": {
+          "val": 713168.7805872901,
+          "val_SI": 713168.7805872901,
+          "is_set": false,
+          "unit": "watt / kelvin",
+          "is_var": false
+        },
+        "kA": {
+          "val": 713168.7805872901,
+          "val_SI": 713168.7805872901,
+          "is_set": false,
+          "unit": "watt / kelvin",
+          "is_var": false
+        },
+        "td_log": {
+          "val": 14.018068856748313,
+          "val_SI": 14.018068856748313,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "lmtd": {
+          "val": 14.018068856748313,
+          "val_SI": 14.018068856748313,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "ttd_u": {
+          "val": 2.0,
+          "val_SI": 2.0,
+          "is_set": true,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "ttd_l": {
+          "val": 45.93320338202449,
+          "val_SI": 45.93320338202449,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "ttd_min": {
+          "val": 2.0,
+          "val_SI": 2.0,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "pr1": {
+          "val": 0.98,
+          "val_SI": 0.9799999999999999,
+          "is_set": true,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "pr2": {
+          "val": 0.98,
+          "val_SI": 0.98,
+          "is_set": true,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "dp1": {
+          "val": 0.3412365987076308,
+          "val_SI": 34123.65987076308,
+          "is_set": false,
+          "unit": "bar",
+          "is_var": false
+        },
+        "dp2": {
+          "val": 0.20408163265306156,
+          "val_SI": 20408.163265306153,
+          "is_set": false,
+          "unit": "bar",
+          "is_var": false
+        },
+        "zeta1_d4": {
+          "val": 976.1973245869591,
+          "val_SI": 976.1973245869591,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "zeta1": {
+          "val": 976.1973245869591,
+          "val_SI": 976.1973245869591,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "zeta2_d4": {
+          "val": 8653.348584714295,
+          "val_SI": 8653.348584714295,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "zeta2": {
+          "val": 8653.348584714295,
+          "val_SI": 8653.348584714295,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "UA_char": {},
+        "UA_char1": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.02476,
+              0.08114,
+              0.167,
+              0.28023,
+              0.41869,
+              0.58027,
+              0.76284,
+              0.96428,
+              1.0,
+              1.18245,
+              1.41525,
+              1.66053,
+              1.91619,
+              2.18009,
+              2.4501,
+              2.72412,
+              3.0
+            ],
+            "y": [
+              0.01,
+              0.19836,
+              0.37181,
+              0.52217,
+              0.65124,
+              0.76085,
+              0.8528,
+              0.92891,
+              0.99099,
+              1.0,
+              1.04084,
+              1.0803,
+              1.11116,
+              1.13524,
+              1.15435,
+              1.1703,
+              1.18492,
+              1.2
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "UA_char2": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.10449,
+              0.23774,
+              0.40054,
+              0.59243,
+              0.81296,
+              1.0,
+              1.0617,
+              1.33818,
+              1.64196,
+              1.97259,
+              2.32963,
+              2.71261,
+              3.0012
+            ],
+            "y": [
+              0.01,
+              0.21181,
+              0.40637,
+              0.58484,
+              0.74792,
+              0.89627,
+              1.0,
+              1.03058,
+              1.15152,
+              1.25977,
+              1.35602,
+              1.44093,
+              1.51519,
+              1.562
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 1,
+            "outconn": 1
+          }
+        },
+        "kA_char": {},
+        "kA_char1": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.02476,
+              0.08114,
+              0.167,
+              0.28023,
+              0.41869,
+              0.58027,
+              0.76284,
+              0.96428,
+              1.0,
+              1.18245,
+              1.41525,
+              1.66053,
+              1.91619,
+              2.18009,
+              2.4501,
+              2.72412,
+              3.0
+            ],
+            "y": [
+              0.01,
+              0.19836,
+              0.37181,
+              0.52217,
+              0.65124,
+              0.76085,
+              0.8528,
+              0.92891,
+              0.99099,
+              1.0,
+              1.04084,
+              1.0803,
+              1.11116,
+              1.13524,
+              1.15435,
+              1.1703,
+              1.18492,
+              1.2
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "kA_char2": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.10449,
+              0.23774,
+              0.40054,
+              0.59243,
+              0.81296,
+              1.0,
+              1.0617,
+              1.33818,
+              1.64196,
+              1.97259,
+              2.32963,
+              2.71261,
+              3.0012
+            ],
+            "y": [
+              0.01,
+              0.21181,
+              0.40637,
+              0.58484,
+              0.74792,
+              0.89627,
+              1.0,
+              1.03058,
+              1.15152,
+              1.25977,
+              1.35602,
+              1.44093,
+              1.51519,
+              1.562
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 1,
+            "outconn": 1
+          }
+        },
+        "eff_hot": {
+          "val": 0.607262276585328,
+          "val_SI": 0.607262276585328,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "eff_cold": {
+          "val": 0.7872697441942659,
+          "val_SI": 0.7872697441942659,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "eff_max": {
+          "val": 0.7872697441942659,
+          "val_SI": 0.7872697441942659,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "Q_sections": {},
+        "T_hot_sections": {},
+        "T_cold_sections": {},
+        "Q_per_section": {},
+        "lmtd_per_section": {},
+        "subcooling": {
+          "val": false,
+          "is_set": true
+        }
+      }
+    },
+    "SimpleHeatExchanger": {
+      "Consumer": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Consumer",
+        "char_warnings": true,
+        "bypass": false,
+        "Q": {
+          "val": -10000000.0,
+          "val_SI": -10000000.0,
+          "is_set": true,
+          "unit": "watt",
+          "is_var": false
+        },
+        "pr": {
+          "val": 0.98,
+          "val_SI": 0.98,
+          "is_set": true,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "dp": {
+          "val": 0.2,
+          "val_SI": 20000.0,
+          "is_set": false,
+          "unit": "bar",
+          "is_var": false
+        },
+        "zeta_d4": {
+          "val": 8480.21631909133,
+          "val_SI": 8480.21631909133,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "zeta": {
+          "val": 8480.21631909133,
+          "val_SI": 8480.21631909133,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "D": {
+          "val": NaN,
+          "val_SI": NaN,
+          "is_set": false,
+          "unit": "meter",
+          "is_var": false
+        },
+        "L": {
+          "val": NaN,
+          "val_SI": NaN,
+          "is_set": false,
+          "unit": "meter",
+          "is_var": false
+        },
+        "ks": {
+          "val": NaN,
+          "val_SI": NaN,
+          "is_set": false,
+          "unit": "meter",
+          "is_var": false
+        },
+        "ks_HW": {
+          "val": NaN,
+          "val_SI": NaN,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "UA": {
+          "val": NaN,
+          "val_SI": NaN,
+          "is_set": false,
+          "unit": "watt / kelvin",
+          "is_var": false
+        },
+        "kA": {
+          "val": NaN,
+          "val_SI": NaN,
+          "is_set": false,
+          "unit": "watt / kelvin",
+          "is_var": false
+        },
+        "lmtd": {
+          "val": NaN,
+          "val_SI": NaN,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "UA_char": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.01084,
+              0.03655,
+              0.07779,
+              0.13389,
+              0.20417,
+              0.28796,
+              0.38458,
+              0.49337,
+              0.61364,
+              0.74473,
+              0.88595,
+              1.0,
+              1.19613,
+              1.36374,
+              1.53879,
+              1.72061,
+              1.90854,
+              2.10189,
+              2.29999,
+              2.50217,
+              2.70776,
+              2.91608,
+              3.0
+            ],
+            "y": [
+              0.01,
+              0.09598,
+              0.18995,
+              0.28191,
+              0.37185,
+              0.45974,
+              0.54557,
+              0.62932,
+              0.71098,
+              0.79053,
+              0.86796,
+              0.94324,
+              1.0,
+              1.0873,
+              1.15605,
+              1.22259,
+              1.28691,
+              1.34898,
+              1.40879,
+              1.46633,
+              1.52157,
+              1.5745,
+              1.62511,
+              1.645
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "kA_char": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.01084,
+              0.03655,
+              0.07779,
+              0.13389,
+              0.20417,
+              0.28796,
+              0.38458,
+              0.49337,
+              0.61364,
+              0.74473,
+              0.88595,
+              1.0,
+              1.19613,
+              1.36374,
+              1.53879,
+              1.72061,
+              1.90854,
+              2.10189,
+              2.29999,
+              2.50217,
+              2.70776,
+              2.91608,
+              3.0
+            ],
+            "y": [
+              0.01,
+              0.09598,
+              0.18995,
+              0.28191,
+              0.37185,
+              0.45974,
+              0.54557,
+              0.62932,
+              0.71098,
+              0.79053,
+              0.86796,
+              0.94324,
+              1.0,
+              1.0873,
+              1.15605,
+              1.22259,
+              1.28691,
+              1.34898,
+              1.40879,
+              1.46633,
+              1.52157,
+              1.5745,
+              1.62511,
+              1.645
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "Tamb": {
+          "val": NaN,
+          "val_SI": NaN,
+          "is_set": false,
+          "unit": "degree_Celsius",
+          "is_var": false
+        },
+        "dissipative": {
+          "val": false,
+          "is_set": true
+        },
+        "darcy_group": {},
+        "hw_group": {},
+        "UA_group": {},
+        "kA_group": {},
+        "UA_char_group": {},
+        "kA_char_group": {}
+      }
+    },
+    "CycleCloser": {
+      "Consumer Cycle Closer": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Consumer Cycle Closer",
+        "char_warnings": true,
+        "bypass": false,
+        "mass_deviation": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "kilogram / second",
+          "is_var": false
+        },
+        "fluid_deviation": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        }
+      },
+      "Main Cycle Closer": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Main Cycle Closer",
+        "char_warnings": true,
+        "bypass": false,
+        "mass_deviation": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "kilogram / second",
+          "is_var": false
+        },
+        "fluid_deviation": {
+          "val": 0.0,
+          "val_SI": 0.0,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        }
+      }
+    },
+    "Pump": {
+      "Consumer Recirculation Pump": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Consumer Recirculation Pump",
+        "char_warnings": true,
+        "bypass": false,
+        "P": {
+          "val": 2750.927244136276,
+          "val_SI": 2750.927244136276,
+          "is_set": false,
+          "unit": "watt",
+          "is_var": false
+        },
+        "pr": {
+          "val": 1.0412328196584757,
+          "val_SI": 1.0412328196584757,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "dp": {
+          "val": -0.4040816326530616,
+          "val_SI": -40408.16326530615,
+          "is_set": false,
+          "unit": "bar",
+          "is_var": false
+        },
+        "eta": {
+          "val": 0.8000099792713473,
+          "val_SI": 0.8000099792713473,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "eta_s": {
+          "val": 0.8,
+          "val_SI": 0.7999999999997782,
+          "is_set": true,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "eta_s_char": {
+          "char_func": {
+            "x": [
+              0.071,
+              0.282,
+              0.635,
+              0.776,
+              0.917,
+              1.0,
+              1.128,
+              1.27,
+              1.41,
+              1.763,
+              2.115,
+              2.5
+            ],
+            "y": [
+              0.25,
+              0.547,
+              0.9,
+              0.965,
+              0.995,
+              1.0,
+              0.99,
+              0.959,
+              0.911,
+              0.737,
+              0.519,
+              0.25
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "v",
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "flow_char": {
+          "char_func": {
+            "x": [
+              0.0,
+              1.0
+            ],
+            "y": [
+              1.0,
+              1.0
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "v",
+          "char_params": {
+            "type": "abs",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "frequency": {
+          "val": NaN,
+          "val_SI": NaN,
+          "is_set": false,
+          "unit": "1 / second",
+          "is_var": false
+        },
+        "eta_flow_map": {
+          "char_func": {
+            "x": [
+              0.0,
+              1.0
+            ],
+            "y": [
+              [
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0
+              ]
+            ],
+            "z": [
+              [
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0
+              ]
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": null
+        },
+        "eta_flow_group": {},
+        "head_flow_map": {
+          "char_func": {
+            "x": [
+              0.0,
+              1.0
+            ],
+            "y": [
+              [
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0
+              ]
+            ],
+            "z": [
+              [
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0
+              ]
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": null
+        },
+        "head_flow_map_group": {},
+        "head": {
+          "val": 4.281937612444943,
+          "val_SI": 4.281937612444943,
+          "is_set": false,
+          "unit": "meter",
+          "is_var": false
+        }
+      },
+      "Heat Source Recirculation Pump": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Heat Source Recirculation Pump",
+        "char_warnings": true,
+        "bypass": false,
+        "P": {
+          "val": 137.58283768221074,
+          "val_SI": 137.58283768221074,
+          "is_set": false,
+          "unit": "watt",
+          "is_var": false
+        },
+        "pr": {
+          "val": 1.0204081632653061,
+          "val_SI": 1.0204081632653061,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "dp": {
+          "val": -0.02026,
+          "val_SI": -2026.0,
+          "is_set": false,
+          "unit": "bar",
+          "is_var": false
+        },
+        "eta": {
+          "val": 0.800000361091235,
+          "val_SI": 0.800000361091235,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "eta_s": {
+          "val": 0.8,
+          "val_SI": 0.8,
+          "is_set": true,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "eta_s_char": {
+          "char_func": {
+            "x": [
+              0.071,
+              0.282,
+              0.635,
+              0.776,
+              0.917,
+              1.0,
+              1.128,
+              1.27,
+              1.41,
+              1.763,
+              2.115,
+              2.5
+            ],
+            "y": [
+              0.25,
+              0.547,
+              0.9,
+              0.965,
+              0.995,
+              1.0,
+              0.99,
+              0.959,
+              0.911,
+              0.737,
+              0.519,
+              0.25
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "v",
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "flow_char": {
+          "char_func": {
+            "x": [
+              0.0,
+              1.0
+            ],
+            "y": [
+              1.0,
+              1.0
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "v",
+          "char_params": {
+            "type": "abs",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "frequency": {
+          "val": NaN,
+          "val_SI": NaN,
+          "is_set": false,
+          "unit": "1 / second",
+          "is_var": false
+        },
+        "eta_flow_map": {
+          "char_func": {
+            "x": [
+              0.0,
+              1.0
+            ],
+            "y": [
+              [
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0
+              ]
+            ],
+            "z": [
+              [
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0
+              ]
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": null
+        },
+        "eta_flow_group": {},
+        "head_flow_map": {
+          "char_func": {
+            "x": [
+              0.0,
+              1.0
+            ],
+            "y": [
+              [
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0
+              ]
+            ],
+            "z": [
+              [
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0
+              ]
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": null
+        },
+        "head_flow_map_group": {},
+        "head": {
+          "val": 0.20821536713983657,
+          "val_SI": 0.20821536713983657,
+          "is_set": false,
+          "unit": "meter",
+          "is_var": false
+        }
+      }
+    },
+    "HeatExchanger": {
+      "Evaporator": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Evaporator",
+        "char_warnings": true,
+        "bypass": false,
+        "Q": {
+          "val": -4508218.111987635,
+          "val_SI": -4508218.111987635,
+          "is_set": false,
+          "unit": "watt",
+          "is_var": false
+        },
+        "UA": {
+          "val": 531140.2742857212,
+          "val_SI": 531140.2742857212,
+          "is_set": false,
+          "unit": "watt / kelvin",
+          "is_var": false
+        },
+        "kA": {
+          "val": 531140.2742857212,
+          "val_SI": 531140.2742857212,
+          "is_set": false,
+          "unit": "watt / kelvin",
+          "is_var": false
+        },
+        "td_log": {
+          "val": 8.487810716388053,
+          "val_SI": 8.487810716388053,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "lmtd": {
+          "val": 8.487810716388053,
+          "val_SI": 8.487810716388053,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "ttd_u": {
+          "val": 22.56998729092453,
+          "val_SI": 22.56998729092453,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "ttd_l": {
+          "val": 2.0,
+          "val_SI": 2.0,
+          "is_set": true,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "ttd_min": {
+          "val": 2.0,
+          "val_SI": 2.0,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "pr1": {
+          "val": 0.98,
+          "val_SI": 0.98,
+          "is_set": true,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "pr2": {
+          "val": 0.98,
+          "val_SI": 0.98,
+          "is_set": true,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "dp1": {
+          "val": 0.02026,
+          "val_SI": 2026.0,
+          "is_set": false,
+          "unit": "bar",
+          "is_var": false
+        },
+        "dp2": {
+          "val": 0.02386819252041183,
+          "val_SI": 2386.819252041183,
+          "is_set": false,
+          "unit": "bar",
+          "is_var": false
+        },
+        "zeta1_d4": {
+          "val": 849.6218909552003,
+          "val_SI": 849.6218909552003,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "zeta1": {
+          "val": 849.6218909552003,
+          "val_SI": 849.6218909552003,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "zeta2_d4": {
+          "val": 11.38098556484363,
+          "val_SI": 11.38098556484363,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "zeta2": {
+          "val": 11.38098556484363,
+          "val_SI": 11.38098556484363,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "UA_char": {},
+        "UA_char1": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.01084,
+              0.03655,
+              0.07779,
+              0.13389,
+              0.20417,
+              0.28796,
+              0.38458,
+              0.49337,
+              0.61364,
+              0.74473,
+              0.88595,
+              1.0,
+              1.19613,
+              1.36374,
+              1.53879,
+              1.72061,
+              1.90854,
+              2.10189,
+              2.29999,
+              2.50217,
+              2.70776,
+              2.91608,
+              3.0
+            ],
+            "y": [
+              0.01,
+              0.09598,
+              0.18995,
+              0.28191,
+              0.37185,
+              0.45974,
+              0.54557,
+              0.62932,
+              0.71098,
+              0.79053,
+              0.86796,
+              0.94324,
+              1.0,
+              1.0873,
+              1.15605,
+              1.22259,
+              1.28691,
+              1.34898,
+              1.40879,
+              1.46633,
+              1.52157,
+              1.5745,
+              1.62511,
+              1.645
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "UA_char2": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.10449,
+              0.23774,
+              0.40054,
+              0.59243,
+              0.81296,
+              1.0,
+              1.0617,
+              1.33818,
+              1.64196,
+              1.97259,
+              2.32963,
+              2.71261,
+              3.0012
+            ],
+            "y": [
+              0.01,
+              0.21181,
+              0.40637,
+              0.58484,
+              0.74792,
+              0.89627,
+              1.0,
+              1.03058,
+              1.15152,
+              1.25977,
+              1.35602,
+              1.44093,
+              1.51519,
+              1.562
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 1,
+            "outconn": 1
+          }
+        },
+        "kA_char": {},
+        "kA_char1": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.01084,
+              0.03655,
+              0.07779,
+              0.13389,
+              0.20417,
+              0.28796,
+              0.38458,
+              0.49337,
+              0.61364,
+              0.74473,
+              0.88595,
+              1.0,
+              1.19613,
+              1.36374,
+              1.53879,
+              1.72061,
+              1.90854,
+              2.10189,
+              2.29999,
+              2.50217,
+              2.70776,
+              2.91608,
+              3.0
+            ],
+            "y": [
+              0.01,
+              0.09598,
+              0.18995,
+              0.28191,
+              0.37185,
+              0.45974,
+              0.54557,
+              0.62932,
+              0.71098,
+              0.79053,
+              0.86796,
+              0.94324,
+              1.0,
+              1.0873,
+              1.15605,
+              1.22259,
+              1.28691,
+              1.34898,
+              1.40879,
+              1.46633,
+              1.52157,
+              1.5745,
+              1.62511,
+              1.645
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "kA_char2": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.10449,
+              0.23774,
+              0.40054,
+              0.59243,
+              0.81296,
+              1.0,
+              1.0617,
+              1.33818,
+              1.64196,
+              1.97259,
+              2.32963,
+              2.71261,
+              3.0012
+            ],
+            "y": [
+              0.01,
+              0.21181,
+              0.40637,
+              0.58484,
+              0.74792,
+              0.89627,
+              1.0,
+              1.03058,
+              1.15152,
+              1.25977,
+              1.35602,
+              1.44093,
+              1.51519,
+              1.562
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 1,
+            "outconn": 1
+          }
+        },
+        "eff_hot": {
+          "val": 0.9091376963838596,
+          "val_SI": 0.9091376963838596,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "eff_cold": {
+          "val": 0.2793623403238506,
+          "val_SI": 0.2793623403238506,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "eff_max": {
+          "val": 0.9091376963838596,
+          "val_SI": 0.9091376963838596,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "Q_sections": {},
+        "T_hot_sections": {},
+        "T_cold_sections": {},
+        "Q_per_section": {},
+        "lmtd_per_section": {}
+      },
+      "Internal Heat Exchanger": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Internal Heat Exchanger",
+        "char_warnings": true,
+        "bypass": false,
+        "Q": {
+          "val": -12390026.034835871,
+          "val_SI": -12390026.034835871,
+          "is_set": false,
+          "unit": "watt",
+          "is_var": false
+        },
+        "UA": {
+          "val": 392867.97808602446,
+          "val_SI": 392867.97808602446,
+          "is_set": false,
+          "unit": "watt / kelvin",
+          "is_var": false
+        },
+        "kA": {
+          "val": 392867.97808602446,
+          "val_SI": 392867.97808602446,
+          "is_set": false,
+          "unit": "watt / kelvin",
+          "is_var": false
+        },
+        "td_log": {
+          "val": 31.537378269406535,
+          "val_SI": 31.537378269406535,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "lmtd": {
+          "val": 31.537378269406535,
+          "val_SI": 31.537378269406535,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "ttd_u": {
+          "val": 72.45679140759711,
+          "val_SI": 72.45679140759711,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "ttd_l": {
+          "val": 10.0,
+          "val_SI": 10.0,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "ttd_min": {
+          "val": 10.0,
+          "val_SI": 10.0,
+          "is_set": false,
+          "unit": "delta_degree_Celsius",
+          "is_var": false
+        },
+        "pr1": {
+          "val": 0.98,
+          "val_SI": 0.9800000000000001,
+          "is_set": true,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "pr2": {
+          "val": 0.98,
+          "val_SI": 0.9799999999999999,
+          "is_set": true,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "dp1": {
+          "val": 0.33441186673347606,
+          "val_SI": 33441.186673347605,
+          "is_set": false,
+          "unit": "bar",
+          "is_var": false
+        },
+        "dp2": {
+          "val": 0.023390828670003833,
+          "val_SI": 2339.082867000383,
+          "is_set": false,
+          "unit": "bar",
+          "is_var": false
+        },
+        "zeta1_d4": {
+          "val": 5093.271544852229,
+          "val_SI": 5093.271544852229,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "zeta1": {
+          "val": 5093.271544852229,
+          "val_SI": 5093.271544852229,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "zeta2_d4": {
+          "val": 3.3388051595870882,
+          "val_SI": 3.3388051595870882,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "zeta2": {
+          "val": 3.3388051595870882,
+          "val_SI": 3.3388051595870882,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "UA_char": {},
+        "UA_char1": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.01084,
+              0.03655,
+              0.07779,
+              0.13389,
+              0.20417,
+              0.28796,
+              0.38458,
+              0.49337,
+              0.61364,
+              0.74473,
+              0.88595,
+              1.0,
+              1.19613,
+              1.36374,
+              1.53879,
+              1.72061,
+              1.90854,
+              2.10189,
+              2.29999,
+              2.50217,
+              2.70776,
+              2.91608,
+              3.0
+            ],
+            "y": [
+              0.01,
+              0.09598,
+              0.18995,
+              0.28191,
+              0.37185,
+              0.45974,
+              0.54557,
+              0.62932,
+              0.71098,
+              0.79053,
+              0.86796,
+              0.94324,
+              1.0,
+              1.0873,
+              1.15605,
+              1.22259,
+              1.28691,
+              1.34898,
+              1.40879,
+              1.46633,
+              1.52157,
+              1.5745,
+              1.62511,
+              1.645
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "UA_char2": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.10449,
+              0.23774,
+              0.40054,
+              0.59243,
+              0.81296,
+              1.0,
+              1.0617,
+              1.33818,
+              1.64196,
+              1.97259,
+              2.32963,
+              2.71261,
+              3.0012
+            ],
+            "y": [
+              0.01,
+              0.21181,
+              0.40637,
+              0.58484,
+              0.74792,
+              0.89627,
+              1.0,
+              1.03058,
+              1.15152,
+              1.25977,
+              1.35602,
+              1.44093,
+              1.51519,
+              1.562
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 1,
+            "outconn": 1
+          }
+        },
+        "kA_char": {},
+        "kA_char1": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.01084,
+              0.03655,
+              0.07779,
+              0.13389,
+              0.20417,
+              0.28796,
+              0.38458,
+              0.49337,
+              0.61364,
+              0.74473,
+              0.88595,
+              1.0,
+              1.19613,
+              1.36374,
+              1.53879,
+              1.72061,
+              1.90854,
+              2.10189,
+              2.29999,
+              2.50217,
+              2.70776,
+              2.91608,
+              3.0
+            ],
+            "y": [
+              0.01,
+              0.09598,
+              0.18995,
+              0.28191,
+              0.37185,
+              0.45974,
+              0.54557,
+              0.62932,
+              0.71098,
+              0.79053,
+              0.86796,
+              0.94324,
+              1.0,
+              1.0873,
+              1.15605,
+              1.22259,
+              1.28691,
+              1.34898,
+              1.40879,
+              1.46633,
+              1.52157,
+              1.5745,
+              1.62511,
+              1.645
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "kA_char2": {
+          "char_func": {
+            "x": [
+              0.0,
+              0.10449,
+              0.23774,
+              0.40054,
+              0.59243,
+              0.81296,
+              1.0,
+              1.0617,
+              1.33818,
+              1.64196,
+              1.97259,
+              2.32963,
+              2.71261,
+              3.0012
+            ],
+            "y": [
+              0.01,
+              0.21181,
+              0.40637,
+              0.58484,
+              0.74792,
+              0.89627,
+              1.0,
+              1.03058,
+              1.15152,
+              1.25977,
+              1.35602,
+              1.44093,
+              1.51519,
+              1.562
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "rel",
+            "inconn": 1,
+            "outconn": 1
+          }
+        },
+        "eff_hot": {
+          "val": 0.9127316678992775,
+          "val_SI": 0.9127316678992775,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "eff_cold": {
+          "val": 0.645450601080084,
+          "val_SI": 0.645450601080084,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "eff_max": {
+          "val": 0.9127316678992775,
+          "val_SI": 0.9127316678992775,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "Q_sections": {},
+        "T_hot_sections": {},
+        "T_cold_sections": {},
+        "Q_per_section": {},
+        "lmtd_per_section": {}
+      }
+    },
+    "PowerSource": {
+      "Grid": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Grid",
+        "char_warnings": true,
+        "bypass": false
+      }
+    },
+    "Sink": {
+      "Heat Source Back Flow": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Heat Source Back Flow",
+        "char_warnings": true,
+        "bypass": false
+      }
+    },
+    "Source": {
+      "Heat Source Feed Flow": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Heat Source Feed Flow",
+        "char_warnings": true,
+        "bypass": false
+      }
+    },
+    "PowerBus": {
+      "Power Distribution": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Power Distribution",
+        "char_warnings": true,
+        "bypass": false,
+        "num_in": {
+          "val": 1,
+          "is_set": true
+        },
+        "num_out": {
+          "val": 3,
+          "is_set": true
+        }
+      }
+    },
+    "Valve": {
+      "Valve": {
+        "design": [],
+        "offdesign": [],
+        "local_design": false,
+        "local_offdesign": false,
+        "design_path": null,
+        "printout": true,
+        "fkt_group": "Valve",
+        "char_warnings": true,
+        "bypass": false,
+        "pr": {
+          "val": 0.0728302459123771,
+          "val_SI": 0.0728302459123771,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "dp": {
+          "val": 15.192771843919772,
+          "val_SI": 1519277.184391977,
+          "is_set": false,
+          "unit": "bar",
+          "is_var": false
+        },
+        "zeta_d4": {
+          "val": 38640.779262260956,
+          "val_SI": 38640.779262260956,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "zeta": {
+          "val": 38640.779262260956,
+          "val_SI": 38640.779262260956,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "dp_char": {
+          "char_func": {
+            "x": [
+              0.0,
+              1.0
+            ],
+            "y": [
+              1.0,
+              1.0
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": "m",
+          "char_params": {
+            "type": "abs"
+          }
+        },
+        "Kv": {
+          "val": 76.35000189761392,
+          "val_SI": 76.35000189761392,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "Kv_char": {
+          "char_func": {
+            "x": [
+              0.0,
+              1.0
+            ],
+            "y": [
+              1.0,
+              1.0
+            ],
+            "extrapolate": false
+          },
+          "is_set": false,
+          "param": null,
+          "char_params": {
+            "type": "rel",
+            "inconn": 0,
+            "outconn": 0
+          }
+        },
+        "opening": {
+          "val": NaN,
+          "val_SI": NaN,
+          "is_set": false,
+          "unit": "dimensionless",
+          "is_var": false
+        },
+        "Kv_char_group": {},
+        "Kv_analytical": {
+          "val": NaN,
+          "is_set": false
+        },
+        "Kv_char_analytical_group": {}
+      }
+    }
+  }
+}
