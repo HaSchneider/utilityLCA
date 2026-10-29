@@ -1,6 +1,6 @@
 from tespy.connections import  Ref
 from tespy.models import  template
-
+import os
 from simodin import interface as link
 from . import create_steam_model as snwm
 
@@ -113,7 +113,7 @@ class steam_net(link.SimModel, template.ModelTemplate):
     }
     def __init__(self,  name, 
                  heatsource = 'conv', 
-                 heatpump_path='',
+                 heatpump_path=None,
                  chp=True
                  ):
         """
@@ -130,7 +130,11 @@ class steam_net(link.SimModel, template.ModelTemplate):
         """
         link.SimModel.__init__(self,  name)
         self.params['heat_source']= heatsource
+        if heatpump_path ==('' or None):
+            heatpump_path = os.path.dirname(os.path.abspath(__file__)) + r'\HeatPumpIHX.json'
+            
         self.params['heatpump_path']= heatpump_path
+        
         self.chp= chp
         template.ModelTemplate.__init__(self)
 
